@@ -1,0 +1,176 @@
+import admins from "../models/superadmin.js";
+import authHelper from '../helpers/auth.js'
+import jwt from "jsonwebtoken";
+
+const {hashPassword,comparePassword}=authHelper
+
+export const registeradmins = async (req, res) => {
+  try {
+    const { name, email, password ,role} = req.body;
+
+    if (!name) return res.json({ error: "name is required" });
+    if (!email) return res.json({ error: "email is required" });
+    if (!password || password.length < 6) {
+      return res.json({ error: "password must be at least 6 characters long" });
+    }
+
+    const existingemail = await admins.findOne({email})
+    if(existingemail) return res.json({error:"Email is already taken"})
+
+    const hashedPassword = await hashPassword(password);
+
+    const admin = await admins.create({ name, email, password:hashedPassword,role });
+    return res
+      .status(200)
+      .send({ msg: `${role} registred sucessfully`, admin });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const loginadmins = async (req, res) => {
+  try {
+    const { password, email} = req.body;
+    if (!email) return res.json({ error: "email is required" });
+    const user = await admins.findOne({email})
+    if(!user) return res.json({error:"this email is not registred"})
+    if (!password || password.length < 6) {
+      return res.json({ error: "password must be at least 6 characters long" });
+    }
+   
+    if (user.isblock) {
+      return res.status(403).json({ error: "Your account is blocked. Contact support." });
+    }
+
+const match = await comparePassword(password,user.password)
+if(!match) return res.json({error:"Enter correct password"})
+
+jwt.sign({email:user.email,id:user.id,name:user.name},process.env.JWT_SECRET,{},(err,token)=>{
+  if(err) throw err;
+  console.log(token);
+
+  
+  res.status(200).json({
+    success: true,
+    message: "Login successful",
+    admin: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+    },
+    token
+});
+})
+
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getadmins = async (req,res)=>{
+  try {
+    // const adminid = user.id;
+const adminlist = await admins.find({role:"admin"})
+console.log(adminlist);
+res.json(adminlist)
+
+  } catch (error) {
+    console.log("error",error);
+    
+  }
+}
+
+
+export const blockandunblockadmin = async (req, res) => {
+  try {
+    const adminId = req.params.id;
+
+    // Find the admin in the database
+    const admin = await admins.findById(adminId);
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    // Toggle the `isblock` status
+    admin.isblock = !admin.isblock;
+    await admin.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Admin ${admin.isblock ? "Blocked" : "Unblocked"} successfully`,
+      admin,
+    });
+
+  } catch (error) {
+    console.error("Error in blockandunblockadmin:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+
+
+export const Editadmin = async (req, res) => {
+  try {
+    const adminId = req.params.id;
+    const { name, email } = req.body;
+
+    // Find the admin in the database
+    const admin = await admins.findById(adminId);
+    if (!admin) {
+      return res.status(404).json({ success: false, message: "Admin not found" });
+    }
+
+    if (!email) return res.json({ error: "email is required" });
+    if (!name) return res.json({ error: "name is required" });
+   
+
+
+    // Update the name if provided
+    if (email) {
+      admin.email = email;
+    }
+
+    // Hash the password if provided
+    if (name) {
+      admin.name = name;
+    }
+
+    // Save the updated admin details
+    await admin.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Update successful",
+      admin
+    })
+
+
+  } catch (error) {
+    console.error("Error updating admin:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+export const getadminbyid = async(req,res)=>{
+  try {
+    const adminid = req.params.id;
+    
+    const admin = await admins.findById(adminid)
+
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "get admin successful",
+      admin
+    });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.log('error fetching admin:',error);
+    
+  }
+}
