@@ -32,7 +32,12 @@ function ManageAdmin() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/getadmins");
+        const token = localStorage.getItem("token"); // Retrieve token from local storage
+        const response = await axios.get("http://localhost:5000/getadmins",{
+          headers: {
+            "Authorization": `Bearer ${token}`  // ✅ Send token in headers
+          }
+        });
         setAdmins(response.data);
       } catch (error) {
         console.error("Error fetching admin data:", error);
@@ -44,9 +49,14 @@ function ManageAdmin() {
   // Function to toggle block/unblock admin
   const blockandunblock = async (adminId, currentStatus) => {
     try {
+      const token = localStorage.getItem("token"); 
       const response = await axios.put(
         `http://localhost:5000/block-unblock-admin/${adminId}`, 
-        {} // Empty body
+        {}, {
+          headers: {
+            "Authorization": `Bearer ${token}`  // ✅ Send token in headers
+          }
+        }
       );
   
       console.log("Block Status Updated:", response.data);
@@ -86,13 +96,33 @@ function ManageAdmin() {
 
   // Update admin details
   const handleEditAdmin = async () => {
-    if (!selectedAdmin) return;
+    if (!selectedAdmin) {
+      console.error("No admin selected!");
+      return;
+    }
+  
+    if (!editedName) {
+      alert("fullname is required"); // Debugging check
+      return; // Prevent API call if name is empty
+    }
+
+    if (!editedEmail) {
+      alert("email is requored")
+      return; // Prevent API call if name is empty
+    }
 
     try {
+      const token = localStorage.getItem("token"); 
       const response = await axios.put(`http://localhost:5000/editadmin/${selectedAdmin._id}`, {
         name: editedName,
         email: editedEmail,
-      });
+      },
+      {
+        headers: {
+          "Authorization": `Bearer ${token}`  // ✅ Send token in headers
+        }
+      }
+    );
 
       if (response.status === 200) {
         setAdmins((prevAdmins) =>

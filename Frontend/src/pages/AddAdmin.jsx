@@ -40,7 +40,12 @@ const handlevalidation =()=>{
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5000/registeradmins", adminData);
+      const token = localStorage.getItem("token"); // Retrieve token from local storage
+      await axios.post("http://localhost:5000/registeradmins", adminData,{
+        headers: {
+          "Authorization": `Bearer ${token}`  // ✅ Send token in headers
+        }
+      });
       alert("Admin added successfully!");
       navigate("/home/manage-admins"); // Redirect after adding admin
     console.log('admin added');

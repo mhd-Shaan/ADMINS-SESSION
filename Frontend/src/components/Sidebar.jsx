@@ -13,8 +13,9 @@ const Sidebar = () => {
    const admin = useSelector((state) => state.admin.admin); // Ensure correct Redux state
 // console.log(state.admin.admin);
 
-  if (!admin) return null; // Prevent rendering if admin is not available
-
+if (admin === undefined || admin === null) {
+  return <p>Loading...</p>; // Prevents errors
+}
   const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard, path: "/home" },
     { name: "Manage Store", icon: Store, path: "/home/manage-store" },
@@ -23,6 +24,7 @@ const Sidebar = () => {
     ...(admin.role === "superadmin"
       ? [{ name: "Manage Admin", icon: Users, path: "/home/manage-admins" }]
       : []),
+
 
   
   ];

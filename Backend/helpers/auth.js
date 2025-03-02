@@ -1,5 +1,7 @@
 import dotenv from 'dotenv'
 import bcrypt, { hash } from 'bcryptjs'
+import jwt from "jsonwebtoken";
+
 
 dotenv.config();
 
@@ -23,19 +25,24 @@ const comparePassword = (password,hashed) =>{
     return compare(password,hashed)
 }
 
+
 const authenticate = (req, res, next) => {
+    
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.sendStatus(401);
+    
 
-    verify(token, process.env.JWT_SECRET, (err, user) => {
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
         if (err) return res.sendStatus(403);
+        console.log(err,'is');
+        
+        
 
-        // Check if the logged-in user is a super admin
-        if (user.role !== 'superadmin') {
-            return res.status(403).json({ message: 'Access denied. Only superadmins can perform this action.' });
-        }
+        console.log("Authenticated user:", user);  // Debugging
 
         req.userId = user.id;
+        req.userRole = user.role; // ✅ Store userRole
+
         next();
     });
 };

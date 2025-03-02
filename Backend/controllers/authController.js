@@ -8,6 +8,10 @@ export const registeradmins = async (req, res) => {
   try {
     const { name, email, password ,role} = req.body;
 
+    if (req.userRole !== "superadmin") {
+      return res.status(403).json({ error: "Access Denied! Only Super Admin can create Admins." });
+    }
+
     if (!name) return res.json({ error: "name is required" });
     if (!email) return res.json({ error: "email is required" });
     if (!password || password.length < 6) {
@@ -45,7 +49,7 @@ export const loginadmins = async (req, res) => {
 const match = await comparePassword(password,user.password)
 if(!match) return res.json({error:"Enter correct password"})
 
-jwt.sign({email:user.email,id:user.id,name:user.name},process.env.JWT_SECRET,{},(err,token)=>{
+jwt.sign({email:user.email,id:user.id,name:user.name,role:user.role},process.env.JWT_SECRET,{},(err,token)=>{
   if(err) throw err;
   console.log(token);
 
@@ -72,7 +76,6 @@ export const getadmins = async (req,res)=>{
   try {
     // const adminid = user.id;
 const adminlist = await admins.find({role:"admin"})
-console.log(adminlist);
 res.json(adminlist)
 
   } catch (error) {
@@ -142,7 +145,8 @@ export const Editadmin = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Update successful",
-      admin
+      admin,
+      
     })
 
 
@@ -152,25 +156,22 @@ export const Editadmin = async (req, res) => {
   }
 };
 
-export const getadminbyid = async(req,res)=>{
+export const getadminDetails = async (req, res) => {
   try {
-    const adminid = req.params.id;
-    
-    const admin = await admins.findById(adminid)
+    const userId = req.userId; // Extracted from JWT token
+    const admin = await admins.findOne({ _id: userId }); // ✅ Correct usage
 
     if (!admin) {
-      return res.status(404).json({ error: "Admin not found" });
+      return res.status(404).json({ success: false, message: "Admin not found" });
     }
 
     res.status(200).json({
       success: true,
-      message: "get admin successful",
-      admin
+      message: "Admin details fetched successfully",
+      admin,
     });
-
   } catch (error) {
+    console.error("Error fetching admin details:", error);
     res.status(500).json({ success: false, message: "Internal Server Error" });
-    console.log('error fetching admin:',error);
-    
   }
-}
+};

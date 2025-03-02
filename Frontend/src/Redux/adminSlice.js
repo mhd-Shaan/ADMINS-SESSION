@@ -12,13 +12,13 @@ const adminSlice = createSlice({
   initialState,
   reducers: {
     loginAdmin: (state, action) => {
-      console.log('state admin',state.admin);
-      
+      console.log("LoginAdmin action payload:", action.payload); // Debugging line
       state.admin = action.payload.admin;
       state.token = action.payload.token;
-      state.role = action.payload.role; // Store the role from backend response
-
+      state.role = action.payload.role;
+      console.log("Redux State After Login:", state); // Debugging line
     },
+    
     logoutAdmin: (state) => {
       state.admin = null;
       state.token = null;
