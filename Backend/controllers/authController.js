@@ -1,6 +1,7 @@
 import admins from "../models/superadmin.js";
 import authHelper from '../helpers/auth.js'
 import jwt from "jsonwebtoken";
+import {sendAdminCredentials} from '../helpers/emailService.js'
 
 const {hashPassword,comparePassword}=authHelper
 
@@ -24,6 +25,8 @@ export const registeradmins = async (req, res) => {
     const hashedPassword = await hashPassword(password);
 
     const admin = await admins.create({ name, email, password:hashedPassword,role });
+    await sendAdminCredentials(email, password);
+
     return res
       .status(200)
       .send({ msg: `${role} registred sucessfully`, admin });
@@ -51,8 +54,6 @@ if(!match) return res.json({error:"Enter correct password"})
 
 jwt.sign({email:user.email,id:user.id,name:user.name,role:user.role},process.env.JWT_SECRET,{},(err,token)=>{
   if(err) throw err;
-  console.log(token);
-
   
   res.status(200).json({
     success: true,
@@ -95,8 +96,8 @@ export const blockandunblockadmin = async (req, res) => {
       return res.status(404).json({ error: "Admin not found" });
     }
 
-    // Toggle the `isblock` status
     admin.isblock = !admin.isblock;
+    
     await admin.save();
 
     res.status(200).json({

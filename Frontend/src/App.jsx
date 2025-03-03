@@ -27,6 +27,7 @@ function App() {
   useEffect(() => {
     const fetchAdminData = async () => {
       const token = localStorage.getItem("token"); // Get token from localStorage
+      console.log("Token Retrieved:", token); // Debugging step
 
       if (!token) {
         console.log("No token found, skipping fetch...");
@@ -48,6 +49,9 @@ function App() {
         console.log("Admin Role:", response.data.admin.role);
       } catch (error) {
         console.error("Error fetching admin data:", error);
+        if (error.response) {
+          console.log("Server Response:", error.response.data); // Log response for more details
+        }
       }
     };
 

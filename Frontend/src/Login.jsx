@@ -20,17 +20,18 @@ function Login() {
     }else{
       navigate('/')
     }
-  }, [token]); 
+  }, [token]);
 
   const loginadmins = async (e) => {
     e.preventDefault();
     const { email, password } = data;
-  
+
+        
     try {
       const response = await axios.post('http://localhost:5000/loginadmins', { email, password });
   
       if (response.data.error) {
-        console.log(response.data.error);
+         console.log(response.data.error);
         alert(response.data.error); // Show error message if returned by API
       } else if (response.data.token) {
         dispatch(loginAdmin({ admin: response.data.admin, token: response.data.token }));
@@ -40,7 +41,8 @@ function Login() {
       }
     } catch (error) {  
       if (error.response && error.response.status === 403) {
-           navigate('/home/adminsuspended')
+        alert("admin is blocked")
+        window.location.reload();
       } else {
         alert("Login failed. Please try again.");
       }
