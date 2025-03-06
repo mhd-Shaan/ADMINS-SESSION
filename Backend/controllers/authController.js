@@ -13,14 +13,14 @@ export const registeradmins = async (req, res) => {
       return res.status(403).json({ error: "Access Denied! Only Super Admin can create Admins." });
     }
 
-    if (!name) return res.json({ error: "name is required" });
-    if (!email) return res.json({ error: "email is required" });
+    if (!name) return res.status(403).json({ error: "name is required" });
+    if (!email) return res.status(403).json({ error: "email is required" });
     if (!password || password.length < 6) {
-      return res.json({ error: "password must be at least 6 characters long" });
+      return res.status(403).json({ error: "password must be at least 6 characters long" });
     }
 
     const existingemail = await admins.findOne({email})
-    if(existingemail) return res.json({error:"Email is already taken"})
+    if(existingemail) return res.status(403).json({error:"Email is already taken"})
 
     const hashedPassword = await hashPassword(password);
 
@@ -38,11 +38,11 @@ export const registeradmins = async (req, res) => {
 export const loginadmins = async (req, res) => {
   try {
     const { password, email} = req.body;
-    if (!email) return res.json({ error: "email is required" });
+    if (!email) return res.status(403).json({ error: "email is required" });
     const user = await admins.findOne({email})
-    if(!user) return res.json({error:"this email is not registred"})
+    if(!user) return res.status(403).json({error:"this email is not registred"})
     if (!password || password.length < 6) {
-      return res.json({ error: "password must be at least 6 characters long" });
+      return res.status(403).json({ error: "password must be at least 6 characters long" });
     }
    
     if (user.isblock) {
@@ -50,7 +50,7 @@ export const loginadmins = async (req, res) => {
     }
 
 const match = await comparePassword(password,user.password)
-if(!match) return res.json({error:"Enter correct password"})
+if(!match) return res.status(403).json({error:"Enter correct password"})
 
 jwt.sign({email:user.email,id:user.id,name:user.name,role:user.role},process.env.JWT_SECRET,{},(err,token)=>{
   if(err) throw err;
