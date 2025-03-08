@@ -5,6 +5,7 @@ import './App.css';
 import { useDispatch } from 'react-redux';
 import { loginAdmin } from './Redux/adminSlice';
 import { useSelector } from 'react-redux';
+import toast, { Toaster } from "react-hot-toast";
 
 function Login() {
   const [data, setData] = useState({ email: "", password: "" });
@@ -32,7 +33,7 @@ function Login() {
   
       if (response.data.error) {
          console.log(response.data.error);
-        alert(response.data.error); // Show error message if returned by API
+        toast.success(response.data.error); // Show error message if returned by API
       } else if (response.data.token) {
         dispatch(loginAdmin({ admin: response.data.admin, token: response.data.token }));
         localStorage.setItem('token', response.data.token);
@@ -41,10 +42,10 @@ function Login() {
       }
     } catch (error) {  
       if (error.response && error.response.status === 403) {
-        alert("admin is blocked")
+        toast.error("admin is blocked")
         window.location.reload();
       } else {
-        alert("Login failed. Please try again.");
+        toast.error("Login failed. Please try again.");
       }
     }
   };

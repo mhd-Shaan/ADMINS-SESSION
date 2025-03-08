@@ -16,6 +16,7 @@ import {
   DialogTitle,
   TextField,
 } from "@mui/material";
+import toast, { Toaster } from "react-hot-toast";
 
 function ManageAdmin() {
   const [admins, setAdmins] = useState([]);
@@ -68,14 +69,14 @@ function ManageAdmin() {
         )
       );
   
-      alert(`Admin ${!currentStatus ? "Blocked" : "Unblocked"} Successfully`);
+      toast.success(`Admin ${!currentStatus ? "Blocked" : "Unblocked"} Successfully`);
     } catch (error) {
       console.error("Error updating admin status:", error);
   
       if (error.response?.status === 403) {
-        alert("Unauthorized: You do not have permission.");
+        toast.error("Unauthorized: You do not have permission.");
       } else {
-        alert("Failed to update admin status. Please check permissions.");
+        toast.error("Failed to update admin status. Please check permissions.");
       }
     }
   };
@@ -102,12 +103,12 @@ function ManageAdmin() {
     }
   
     if (!editedName) {
-      alert("fullname is required"); // Debugging check
+      toast.error("fullname is required"); // Debugging check
       return; // Prevent API call if name is empty
     }
 
     if (!editedEmail) {
-      alert("email is requored")
+      toast.error("email is requored")
       return; // Prevent API call if name is empty
     }
 

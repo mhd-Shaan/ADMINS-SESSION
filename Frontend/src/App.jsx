@@ -18,6 +18,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginAdmin } from "./Redux/adminSlice";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { Toaster } from "react-hot-toast";
 
 function App() {
   const [admins, setAdmin] = useState(null); // Initialize as null
@@ -59,6 +60,8 @@ function App() {
   }, [dispatch]);
 
   return (
+    <>
+          <Toaster position="top-right" reverseOrder={false} />
     <Router>
       <Routes>
         {/* Public Route */}
@@ -96,6 +99,7 @@ function App() {
         </Route>
       </Routes>
     </Router>
+    </>
   );
 }
 

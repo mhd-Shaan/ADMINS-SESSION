@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios"; // Use axios to send requests
 import { TextField, Button, Container, Typography } from "@mui/material";
+import toast, { Toaster } from "react-hot-toast";
 
 const AddAdmin = () => {
   const [adminData, setAdminData] = useState({
@@ -17,16 +18,16 @@ const AddAdmin = () => {
 
 const handlevalidation =()=>{
   if(!adminData.name){
-    alert('admin name is required')
+    toast.error('admin name is required')
   }
   if(!adminData.email){
-    alert('admin email is required')
+    toast.error('admin email is required')
   }
   if(!adminData.password){
-    alert("admin password is required")
+    toast.error("admin password is required")
   }
   if(adminData.password.length < 6){
-    alert("admin password must be more than 6 charachter")
+    toast.error("admin password must be more than 6 charachter")
 
   }
 }
@@ -46,13 +47,13 @@ const handlevalidation =()=>{
           "Authorization": `Bearer ${token}`  // ✅ Send token in headers
         }
       });
-      alert("Admin added successfully!");
+      toast.success("Admin added successfully!");
       navigate("/home/manage-admins"); // Redirect after adding admin
     console.log('admin added');
     
     } catch (error) {
       console.error("Error adding admin:", error);
-      alert("Failed to add admin!");
+      toast.error("Failed to add admin!");
     }
   };
 
