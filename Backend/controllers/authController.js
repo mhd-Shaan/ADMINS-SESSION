@@ -3,6 +3,7 @@ import authHelper from '../helpers/auth.js'
 import jwt from "jsonwebtoken";
 import {sendAdminCredentials} from '../helpers/emailService.js'
 
+
 const {hashPassword,comparePassword}=authHelper
 
 export const registeradmins = async (req, res) => {
