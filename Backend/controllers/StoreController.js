@@ -3,21 +3,47 @@ import Stores from "../models/stores.js"
 
 export const GetStorespending =async(req,res)=>{
     try {
+      const { page = 1, limit = 10 } = req.query; // Default values: page 1, 10 users per page
+        const skip = (page - 1) * limit; 
+
+        const totalStores = await Stores.countDocuments(); // Total user count
+        const StoreDetails = await Stores.find().skip(skip).limit(Number(limit));
+
         const storedetails = await Stores.find({status:"pending"})
-        console.log(storedetails);
-    } catch (error) {
-        console.log(error);
-        
+        if (!storedetails.length) {
+          return res.status(404).json({ message: "No pending stores found" });
+        }
+         res.status(200).json({
+          StoreDetails,
+          currentPage: Number(page),
+          totalPages: Math.ceil(totalStores / limit),
+          totalStores,
+        })
+      } catch (error) {
+        console.error("Error fetching pending stores:", error);
+        res.status(500).json({ message: "Server error, please try again later" });
+
     }
 }
 
 export const GetStores =async(req,res)=>{
     try {
-        const storedetails = await Stores.find({ status: { $ne: "pending" } });
-        console.log(storedetails);
-    } catch (error) {
-        console.log(error);
-        
+
+      const { page = 1, limit = 10 } = req.query; // Default values: page 1, 10 users per page
+      const skip = (page - 1) * limit; 
+
+      const totalStores = await Stores.countDocuments(); // Total user count
+      const StoreDetails = await Stores.find().skip(skip).limit(Number(limit));
+
+        const storedetails = await Stores.find({ status:"approved" });
+        res.status(200).json({
+          StoreDetails,
+          currentPage: Number(page),
+          totalPages: Math.ceil(totalStores / limit),
+          totalStores,
+        })    } catch (error) {
+      console.error("Error fetching approved stores:", error);
+      res.status(500).json({ message: "Server error, please try again later" });        
     }
 }
 
@@ -37,7 +63,7 @@ export const storesblockandunblock= async(req,res)=>{
     
         res.status(200).json({
           success: true,
-          message: `store ${store.isblocked ? "Blocked" : "Unblocked"} successfully`,
+          message: `store ${store.isBlocked ? "Blocked" : "Unblocked"} successfully`,
           store,
         });
     

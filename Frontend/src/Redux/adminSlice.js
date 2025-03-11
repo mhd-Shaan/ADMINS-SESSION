@@ -16,7 +16,6 @@ const adminSlice = createSlice({
       state.admin = action.payload.admin;
       state.token = action.payload.token;
       state.role = action.payload.role;
-      console.log("Redux State After Login:", state); // Debugging line
     },
     
     logoutAdmin: (state) => {

@@ -19,6 +19,7 @@ import { loginAdmin } from "./Redux/adminSlice";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Toaster } from "react-hot-toast";
+import ManageUsers from "./pages/ManageUsers";
 
 function App() {
   const [admins, setAdmin] = useState(null); // Initialize as null
@@ -28,7 +29,6 @@ function App() {
   useEffect(() => {
     const fetchAdminData = async () => {
       const token = localStorage.getItem("token"); // Get token from localStorage
-      console.log("Token Retrieved:", token); // Debugging step
 
       if (!token) {
         console.log("No token found, skipping fetch...");
@@ -77,6 +77,7 @@ function App() {
         >
           <Route index element={<Main />} />{" "}
           {/* Ensures Admin Dashboard loads first */}
+          <Route path="manage-users" element={<ManageUsers/>}></Route>
           <Route path="manage-store" element={<ManageStore />} />
           <Route path="manage-advertisement" element={<Advertiment />} />
           <Route path="manage-reviews" element={<Reviews />} />
