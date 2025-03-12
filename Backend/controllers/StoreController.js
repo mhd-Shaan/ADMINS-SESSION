@@ -11,7 +11,7 @@ export const GetStorespending =async(req,res)=>{
 
         const storedetails = await Stores.find({status:"pending"})
         if (!storedetails.length) {
-          return res.status(404).json({ message: "No pending stores found" });
+          return res.status(404).json({ error: "No pending stores found" });
         }
          res.status(200).json({
           StoreDetails,
