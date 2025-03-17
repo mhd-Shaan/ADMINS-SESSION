@@ -12,9 +12,8 @@ function ManageUsers() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const usersPerPage = 10; // Define users per page
+  const usersPerPage = 10; 
 
-  // Fetch user data from backend with pagination
   useEffect(() => {
     fetchUsers();
   }, [currentPage,searchQuery]);
@@ -41,7 +40,7 @@ function ManageUsers() {
     setCurrentPage(1); 
   };
 
-  // Function to block/unblock user
+
   const blockAndUnblock = async (userId, currentStatus) => {
     try {
       const token = localStorage.getItem("token");
@@ -68,7 +67,7 @@ function ManageUsers() {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
       <div className="w-full max-w-6xl bg-white shadow-lg rounded-lg p-6">
         
-        {/* Search Field */}
+
         <TextField
           label="Search"
           variant="outlined"

@@ -57,7 +57,6 @@ function ManageAdmin() {
   }, [currentPage, searchQuery]);
   
 
-  // Function to toggle block/unblock admin
   const blockandunblock = async (adminId, currentStatus) => {
     try {
       const token = localStorage.getItem("token"); 
@@ -65,14 +64,13 @@ function ManageAdmin() {
         `http://localhost:5000/block-unblock-admin/${adminId}`, 
         {}, {
           headers: {
-            "Authorization": `Bearer ${token}`  // ✅ Send token in headers
+            "Authorization": `Bearer ${token}` 
           }
         }
       );
   
       console.log("Block Status Updated:", response.data);
   
-      // Update admin status in the state
       setAdmins((prevAdmins) =>
         prevAdmins.map((admin) =>
           admin._id === adminId ? { ...admin, isblock: !currentStatus } : admin
@@ -91,7 +89,6 @@ function ManageAdmin() {
     }
   };
 
-  // Open edit dialog
   const handleOpenEditDialog = (admin) => {
     setSelectedAdmin(admin);
     setEditedName(admin.name);
@@ -99,13 +96,11 @@ function ManageAdmin() {
     setOpenEditDialog(true);
   };
 
-  // Close edit dialog
   const handleCloseEditDialog = () => {
     setOpenEditDialog(false);
     setSelectedAdmin(null);
   };
 
-  // Update admin details
   const handleEditAdmin = async () => {
     if (!selectedAdmin) {
       console.error("No admin selected!");
@@ -113,13 +108,13 @@ function ManageAdmin() {
     }
   
     if (!editedName) {
-      toast.error("fullname is required"); // Debugging check
-      return; // Prevent API call if name is empty
+      toast.error("fullname is required"); 
+      return; 
     }
 
     if (!editedEmail) {
       toast.error("email is required")
-      return; // Prevent API call if name is empty
+      return; 
     }
 
     try {
@@ -130,7 +125,7 @@ function ManageAdmin() {
       },
       {
         headers: {
-          "Authorization": `Bearer ${token}`  // ✅ Send token in headers
+          "Authorization": `Bearer ${token}`  
         }
       }
     );
@@ -159,10 +154,9 @@ function ManageAdmin() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-      {/* Main Content */}
       <div className="w-full max-w-6xl bg-white shadow-lg rounded-lg p-6">
       <div className="flex justify-between items-center mb-4 gap-4">
-  {/* Search Field */}
+
   <TextField
     label="Search"
     variant="outlined"
@@ -193,7 +187,6 @@ function ManageAdmin() {
 </div>
 
 
-        {/* Admin Table */}
         <TableContainer component={Paper} className="shadow-lg rounded-lg">
           <Table>
             <TableHead>
@@ -256,7 +249,6 @@ function ManageAdmin() {
               </div>
       </div>
 
-      {/* Edit Admin Dialog */}
       <Dialog open={openEditDialog} onClose={handleCloseEditDialog}>
         <DialogTitle>Edit Admin</DialogTitle>
         <DialogContent>
