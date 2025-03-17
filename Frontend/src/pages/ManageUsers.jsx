@@ -28,7 +28,7 @@ function ManageUsers() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setUsers(response.data.userdetails);
-      setFilteredUsers(response.data.userdetails); // Initially set filtered users
+      setFilteredUsers(response.data.userdetails); 
       setTotalPages(response.data.totalPages);
     } catch (error) {
       console.error("Error fetching user data:", error);

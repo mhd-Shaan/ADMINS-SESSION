@@ -95,16 +95,22 @@ export const loginadmins = async (req, res) => {
 
 export const getadmins = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query; 
+    const { page = 1, limit = 10 ,search=''} = req.query; 
 
-    console.log(req.query);
     
     const skip = (page - 1) * limit; 
+    const searchFilter = {
+      role: "admin",
+      $or: [
+        { name: { $regex: search, $options: "i" } }, 
+        { email: { $regex: search, $options: "i" } }, 
+      ],
+    };
 
 
-    const totaladmins = await admins.countDocuments(); // Get total count
+    const totaladmins = await admins.countDocuments(searchFilter)
 
-    const adminlist = await admins.find({ role: "admin" }).skip(skip).limit(Number(limit));
+    const adminlist = await admins.find(searchFilter).skip(skip).limit(Number(limit));
 
     res.json({
       totaladmins,

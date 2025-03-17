@@ -16,7 +16,11 @@ import {
   DialogTitle,
   TextField,
   Pagination,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+
 import toast, { Toaster } from "react-hot-toast";
 
 function ManageAdmin() {
@@ -27,6 +31,7 @@ function ManageAdmin() {
   const [editedEmail, setEditedEmail] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
   const adminPerPage = 10; 
   
   const navigate = useNavigate();
@@ -35,27 +40,22 @@ function ManageAdmin() {
   
 
   useEffect(() => {
-    
-    const fetchData = async (page) => {
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem("token"); 
-        const response = await axios.get(`http://localhost:5000/getadmins?page=${page}&limit=${adminPerPage}`,{
-          headers: {
-            "Authorization": `Bearer ${token}` 
-          }
+        const response = await axios.get("http://localhost:5000/getadmins", {
+          params: { page: currentPage, limit: adminPerPage, search: searchQuery },
+          headers: { Authorization: `Bearer ${token}` },
         });
         setAdmins(response.data.adminlist);
-        console.log(response.data.totalPages);
-        
-        setTotalPages(Math.ceil(response.data.totalPages));
-        console.log(response.data);
-
+        setTotalPages(response.data.totalPages);
       } catch (error) {
         console.error("Error fetching admin data:", error);
       }
     };
-    fetchData(currentPage);
-  }, [currentPage]); 
+    fetchData();
+  }, [currentPage, searchQuery]);
+  
 
   // Function to toggle block/unblock admin
   const blockandunblock = async (adminId, currentStatus) => {
@@ -118,7 +118,7 @@ function ManageAdmin() {
     }
 
     if (!editedEmail) {
-      toast.error("email is requored")
+      toast.error("email is required")
       return; // Prevent API call if name is empty
     }
 
@@ -151,20 +151,47 @@ function ManageAdmin() {
     }
   };
 
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    setCurrentPage(1); 
+  };
+  
+
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
       {/* Main Content */}
       <div className="w-full max-w-6xl bg-white shadow-lg rounded-lg p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Manage Admins</h2>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => navigate("/home/add-admins")}
-          >
-            Add New Admin
-          </Button>
-        </div>
+      <div className="flex justify-between items-center mb-4 gap-4">
+  {/* Search Field */}
+  <TextField
+    label="Search"
+    variant="outlined"
+    fullWidth
+    value={searchQuery}
+    onChange={(e) => handleSearch(e.target.value)}
+    InputProps={{
+      endAdornment: (
+        <InputAdornment position="end">
+          <IconButton>
+            <SearchIcon />
+          </IconButton>
+        </InputAdornment>
+      ),
+    }}
+    className="mb-4"
+  />
+  <Button
+    variant="contained"
+    color="primary"
+    onClick={() => navigate("/home/add-admins")}
+    className="whitespace-nowrap"
+    
+
+  >
+    Add NewAdmin
+  </Button>
+</div>
+
 
         {/* Admin Table */}
         <TableContainer component={Paper} className="shadow-lg rounded-lg">
