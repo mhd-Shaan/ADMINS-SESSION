@@ -31,11 +31,18 @@ export const userblockandunblock= async(req,res)=>{
 
 export const GetUsers = async (req, res) => {
   try {
-      const { page = 1, limit = 10 } = req.query; // Default values: page 1, 10 users per page
+      const { page = 1, limit = 10 ,search=''} = req.query; // Default values: page 1, 10 users per page
       const skip = (page - 1) * limit; 
 
-      const totalUsers = await Users.countDocuments(); // Total user count
-      const userdetails = await Users.find().skip(skip).limit(Number(limit));
+      const searchFilter = {
+        $or: [
+          { name: { $regex: search, $options: "i" } }, 
+          { email: { $regex: search, $options: "i" } }, 
+        ],
+      };
+
+      const totalUsers = await Users.countDocuments(searchFilter); // Total user count
+      const userdetails = await Users.find(searchFilter).skip(skip).limit(Number(limit));
 
       res.status(200).json({
           userdetails,

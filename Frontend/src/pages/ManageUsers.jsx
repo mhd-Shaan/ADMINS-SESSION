@@ -9,7 +9,6 @@ import SearchIcon from "@mui/icons-material/Search";
 
 function ManageUsers() {
   const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]); // Filtered list
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -17,18 +16,19 @@ function ManageUsers() {
 
   // Fetch user data from backend with pagination
   useEffect(() => {
-    fetchUsers(currentPage);
-  }, [currentPage]);
+    fetchUsers();
+  }, [currentPage,searchQuery]);
 
-  const fetchUsers = async (page) => {
+  const fetchUsers = async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:5000/getallusers?page=${page}&limit=${usersPerPage}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+        "http://localhost:5000/getallusers",{
+        params: { page: currentPage, limit: usersPerPage, search: searchQuery },
+         headers: { Authorization: `Bearer ${token}` },
+    })
+    
       setUsers(response.data.userdetails);
-      setFilteredUsers(response.data.userdetails); 
       setTotalPages(response.data.totalPages);
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -36,19 +36,9 @@ function ManageUsers() {
     }
   };
 
-  // Function to filter users based on search input
   const handleSearch = (query) => {
-    setSearchQuery(query);
-    if (!query) {
-      setFilteredUsers(users); // Reset if empty
-    } else {
-      const filtered = users.filter(
-        (user) =>
-          user.name.toLowerCase().includes(query.toLowerCase()) ||
-          user.email.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredUsers(filtered);
-    }
+    setSearchQuery(query);    
+    setCurrentPage(1); 
   };
 
   // Function to block/unblock user
@@ -110,8 +100,8 @@ function ManageUsers() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredUsers.length > 0 ? (
-                filteredUsers.map((user, index) => (
+              {users.length > 0 ? (
+                users.map((user, index) => (
                   <TableRow key={user._id} className="hover:bg-gray-100">
                     <TableCell>{(currentPage - 1) * usersPerPage + index + 1}</TableCell>
                     <TableCell>{user.name}</TableCell>
