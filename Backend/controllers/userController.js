@@ -31,7 +31,7 @@ export const userblockandunblock= async(req,res)=>{
 
 export const GetUsers = async (req, res) => {
   try {
-      const { page = 1, limit = 4 } = req.query; // Default values: page 1, 10 users per page
+      const { page = 1, limit = 10 } = req.query; // Default values: page 1, 10 users per page
       const skip = (page - 1) * limit; 
 
       const totalUsers = await Users.countDocuments(); // Total user count

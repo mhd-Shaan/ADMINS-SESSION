@@ -19,17 +19,24 @@ const AddAdmin = () => {
 const handlevalidation =()=>{
   if(!adminData.name){
     toast.error('admin name is required')
+    return false
   }
   if(!adminData.email){
     toast.error('admin email is required')
+    return false
+
   }
   if(!adminData.password){
     toast.error("admin password is required")
+    return false
+
   }
   if(adminData.password.length < 6){
     toast.error("admin password must be more than 6 charachter")
+    return false
 
   }
+  return true
 }
 
   // Handle input change
@@ -40,6 +47,7 @@ const handlevalidation =()=>{
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if(!handlevalidation()) return
     try {
       const token = localStorage.getItem("token"); // Retrieve token from local storage
       await axios.post("http://localhost:5000/registeradmins", adminData,{
@@ -53,7 +61,7 @@ const handlevalidation =()=>{
     
     } catch (error) {
       console.error("Error adding admin:", error);
-      toast.error("Failed to add admin!");
+      toast.error(error.response.data.error);
     }
   };
 
@@ -70,7 +78,6 @@ const handlevalidation =()=>{
           value={adminData.name}
           onChange={handleChange}
           margin="normal"
-          required
         />
         <TextField
           fullWidth
@@ -80,7 +87,6 @@ const handlevalidation =()=>{
           value={adminData.email}
           onChange={handleChange}
           margin="normal"
-          required
         />
         <TextField
           fullWidth
@@ -90,9 +96,9 @@ const handlevalidation =()=>{
           value={adminData.password}
           onChange={handleChange}
           margin="normal"
-          required
+          
         />
-        <Button onClick={handlevalidation}  type="submit" variant="contained" color="primary" fullWidth>
+        <Button   type="submit" variant="contained" color="primary" fullWidth>
           Add Admin
         </Button>
       </form>

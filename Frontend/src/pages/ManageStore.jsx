@@ -24,7 +24,6 @@ function ManageStore() {
         }
       );
       console.log(pendingResponse.data.StoreDetails);
-
       setStores(pendingResponse.data.StoreDetails);
     } catch (error) {
       console.error("Error fetching pending stores:", error);

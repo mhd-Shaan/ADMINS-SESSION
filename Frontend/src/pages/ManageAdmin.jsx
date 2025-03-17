@@ -15,6 +15,7 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
+  Pagination,
 } from "@mui/material";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -24,28 +25,37 @@ function ManageAdmin() {
   const [selectedAdmin, setSelectedAdmin] = useState(null);
   const [editedName, setEditedName] = useState("");
   const [editedEmail, setEditedEmail] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const adminPerPage = 10; 
+  
   const navigate = useNavigate();
 
   
   
 
-  // Fetch admin data from backend
   useEffect(() => {
-    const fetchData = async () => {
+    
+    const fetchData = async (page) => {
       try {
-        const token = localStorage.getItem("token"); // Retrieve token from local storage
-        const response = await axios.get("http://localhost:5000/getadmins",{
+        const token = localStorage.getItem("token"); 
+        const response = await axios.get(`http://localhost:5000/getadmins?page=${page}&limit=${adminPerPage}`,{
           headers: {
-            "Authorization": `Bearer ${token}`  // ✅ Send token in headers
+            "Authorization": `Bearer ${token}` 
           }
         });
-        setAdmins(response.data);
+        setAdmins(response.data.adminlist);
+        console.log(response.data.totalPages);
+        
+        setTotalPages(Math.ceil(response.data.totalPages));
+        console.log(response.data);
+
       } catch (error) {
         console.error("Error fetching admin data:", error);
       }
     };
-    fetchData();
-  }, []); // Only fetch data once when the component mounts
+    fetchData(currentPage);
+  }, [currentPage]); 
 
   // Function to toggle block/unblock admin
   const blockandunblock = async (adminId, currentStatus) => {
@@ -134,6 +144,7 @@ function ManageAdmin() {
           )
         );
         handleCloseEditDialog();
+        toast.success('admin edited succesfully')
       }
     } catch (error) {
       console.error("Error updating admin details:", error);
@@ -172,7 +183,8 @@ function ManageAdmin() {
               {admins.length > 0 ? (
                 admins.map((admin, index) => (
                   <TableRow key={admin._id} className="hover:bg-gray-100">
-                    <TableCell>{index + 1}</TableCell>
+                  <TableCell>{(currentPage - 1) * adminPerPage + index + 1}</TableCell>
+                    {/* <TableCell>{index + 1}</TableCell> */}
                     <TableCell>{admin.name}</TableCell>
                     <TableCell>{admin.email}</TableCell>
                     <TableCell>
@@ -207,6 +219,14 @@ function ManageAdmin() {
             </TableBody>
           </Table>
         </TableContainer>
+        <div className="flex justify-center mt-4">
+                <Pagination
+                  count={totalPages}
+                  page={currentPage}
+                  onChange={(event, value) => setCurrentPage(value)}
+                  color="primary"
+                />
+              </div>
       </div>
 
       {/* Edit Admin Dialog */}
@@ -237,6 +257,8 @@ function ManageAdmin() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      
     </div>
   );
 }
