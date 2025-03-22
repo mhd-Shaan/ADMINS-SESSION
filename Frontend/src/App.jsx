@@ -21,6 +21,7 @@ import axios from "axios";
 import { Toaster } from "react-hot-toast";
 import ManageUsers from "./pages/ManageUsers";
 import ManageProducts from "./pages/ManageProducts";
+import ProfileDetails from "./components/ProfileDetails";
 
 function App() {
   const [admins, setAdmin] = useState(null); // Initialize as null
@@ -67,7 +68,7 @@ function App() {
       <Routes>
         {/* Public Route */}
         <Route path="/" element={<Login />} />
-
+       <Route path="/profile" element={<ProfileDetails/>}></Route>
         <Route
           path="/home"
           element={
