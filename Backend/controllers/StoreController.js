@@ -7,10 +7,10 @@ export const GetStorespending =async(req,res)=>{
         const skip = (page - 1) * limit; 
 
         const totalStores = await Stores.countDocuments(); // Total user count
-        const StoreDetails = await Stores.find().skip(skip).limit(Number(limit));
+        const StoreDetails = await Stores.find({status:"pending"}).skip(skip).limit(Number(limit));
 
-        const storedetails = await Stores.find({status:"pending"})
-        if (!storedetails.length) {
+        
+        if (!StoreDetails.length) {
           return res.status(404).json({ error: "No pending stores found" });
         }
          res.status(200).json({
@@ -33,15 +33,15 @@ export const GetStores =async(req,res)=>{
       const skip = (page - 1) * limit; 
 
       const totalStores = await Stores.countDocuments(); // Total user count
-      const StoreDetails = await Stores.find().skip(skip).limit(Number(limit));
+      const StoreDetails = await Stores.find({status:"approved"}).skip(skip).limit(Number(limit));
 
-        const storedetails = await Stores.find({ status:"approved" });
         res.status(200).json({
           StoreDetails,
           currentPage: Number(page),
           totalPages: Math.ceil(totalStores / limit),
           totalStores,
-        })    } catch (error) {
+        })   
+       }   catch (error) {
       console.error("Error fetching approved stores:", error);
       res.status(500).json({ message: "Server error, please try again later" });        
     }

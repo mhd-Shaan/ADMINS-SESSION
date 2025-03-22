@@ -18,10 +18,13 @@ import {
   Pagination,
   InputAdornment,
   IconButton,
+  Menu,
+  MenuItem,
+  Tooltip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-
-import toast, { Toaster } from "react-hot-toast";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import toast from "react-hot-toast";
 
 function ManageAdmin() {
   const [admins, setAdmins] = useState([]);
@@ -32,21 +35,23 @@ function ManageAdmin() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const adminPerPage = 10; 
-  
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [menuAdminId, setMenuAdminId] = useState(null);
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterdata,setFilterdata]=useState([])
+  const adminPerPage = 10;
   const navigate = useNavigate();
-
-  
-  
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem("token"); 
+        const token = localStorage.getItem("token");
         const response = await axios.get("http://localhost:5000/getadmins", {
           params: { page: currentPage, limit: adminPerPage, search: searchQuery },
           headers: { Authorization: `Bearer ${token}` },
         });
+
+        console.log("Fetched Admins:", response.data);
         setAdmins(response.data.adminlist);
         setTotalPages(response.data.totalPages);
       } catch (error) {
@@ -55,45 +60,19 @@ function ManageAdmin() {
     };
     fetchData();
   }, [currentPage, searchQuery]);
-  
-
-  const blockandunblock = async (adminId, currentStatus) => {
-    try {
-      const token = localStorage.getItem("token"); 
-      const response = await axios.put(
-        `http://localhost:5000/block-unblock-admin/${adminId}`, 
-        {}, {
-          headers: {
-            "Authorization": `Bearer ${token}` 
-          }
-        }
-      );
-  
-      console.log("Block Status Updated:", response.data);
-  
-      setAdmins((prevAdmins) =>
-        prevAdmins.map((admin) =>
-          admin._id === adminId ? { ...admin, isblock: !currentStatus } : admin
-        )
-      );
-  
-      toast.success(`Admin ${!currentStatus ? "Blocked" : "Unblocked"} Successfully`);
-    } catch (error) {
-      console.error("Error updating admin status:", error);
-  
-      if (error.response?.status === 403) {
-        toast.error("Unauthorized: You do not have permission.");
-      } else {
-        toast.error("Failed to update admin status. Please check permissions.");
-      }
-    }
-  };
 
   const handleOpenEditDialog = (admin) => {
+    if (!admin) {
+      console.error("Error: No admin selected");
+      return;
+    }
+
+    console.log("Selected Admin for Editing:", admin);
     setSelectedAdmin(admin);
-    setEditedName(admin.name);
-    setEditedEmail(admin.email);
+    setEditedName(admin.name || "");
+    setEditedEmail(admin.email || "");
     setOpenEditDialog(true);
+    handleCloseMenu();
   };
 
   const handleCloseEditDialog = () => {
@@ -103,32 +82,24 @@ function ManageAdmin() {
 
   const handleEditAdmin = async () => {
     if (!selectedAdmin) {
-      console.error("No admin selected!");
+      toast.error("No admin selected!");
       return;
     }
-  
-    if (!editedName) {
-      toast.error("fullname is required"); 
-      return; 
-    }
 
-    if (!editedEmail) {
-      toast.error("email is required")
-      return; 
+    if (!editedName || !editedEmail) {
+      toast.error("Full Name and Email are required!");
+      return;
     }
 
     try {
-      const token = localStorage.getItem("token"); 
-      const response = await axios.put(`http://localhost:5000/editadmin/${selectedAdmin._id}`, {
-        name: editedName,
-        email: editedEmail,
-      },
-      {
-        headers: {
-          "Authorization": `Bearer ${token}`  
-        }
-      }
-    );
+      const token = localStorage.getItem("token");
+      const response = await axios.put(
+        `http://localhost:5000/editadmin/${selectedAdmin._id}`,
+        { name: editedName, email: editedEmail },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log("Edit Admin Response:", response.data);
 
       if (response.status === 200) {
         setAdmins((prevAdmins) =>
@@ -139,28 +110,80 @@ function ManageAdmin() {
           )
         );
         handleCloseEditDialog();
-        toast.success('admin edited succesfully')
+        toast.success("Admin edited successfully");
+      } else {
+        toast.error("Failed to update admin details.");
       }
     } catch (error) {
-      console.error("Error updating admin details:", error);
+      console.error("Error updating admin:", error);
+      toast.error("An error occurred while updating.");
     }
+  };
+
+  const blockAndUnblock = async (adminId, currentStatus) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `http://localhost:5000/block-unblock-admin/${adminId}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setAdmins((prevAdmins) =>
+        prevAdmins.map((admin) =>
+          admin._id === adminId ? { ...admin, isblock: !currentStatus } : admin
+        )
+      );
+      toast.success(`Admin ${!currentStatus ? "Blocked" : "Unblocked"} Successfully`);
+      handleCloseMenu();
+    } catch (error) {
+      console.error("Error updating admin status:", error);
+      toast.error("Failed to update admin status.");
+    }
+  };
+
+  const handleMenuClick = (event, adminId) => {
+    setAnchorEl(event.currentTarget);
+    setMenuAdminId(adminId);
+  };
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+    setMenuAdminId(null);
   };
 
   const handleSearch = (query) => {
     setSearchQuery(query);
-    setCurrentPage(1); 
+    setCurrentPage(1);
+  };
+
+  const handlefilter = () => {
+    let filteredData;
+    
+    if (filterStatus === "Blocked Admins") {
+      
+      filteredData = admins.filter(admin => admin.isblock);
+    } else if (filterStatus === "Unblocked Admins") {
+      console.log('helllo');
+      
+      filteredData = admins.filter(admin => !admin.isblock);
+    } else {
+      filteredData = admins; // Show all
+      
+    }
+  
+    setFilterdata(filteredData);
+    console.log("Filtered Data:", filteredData);
   };
   
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
       <div className="w-full max-w-6xl bg-white shadow-lg rounded-lg p-6">
-      <div className="flex justify-between items-center mb-4 gap-4">
-
+      <div className="flex justify-between items-center mb-4">
   <TextField
     label="Search"
     variant="outlined"
-    fullWidth
     value={searchQuery}
     onChange={(e) => handleSearch(e.target.value)}
     InputProps={{
@@ -172,17 +195,26 @@ function ManageAdmin() {
         </InputAdornment>
       ),
     }}
-    className="mb-4"
+    className="w-2/5"
   />
-  <Button
-    variant="contained"
-    color="primary"
-    onClick={() => navigate("/home/add-admins")}
-    className="whitespace-nowrap"
-    
 
+  <TextField
+    select
+    label="Filter"
+    value={filterStatus}
+    onChange={(e) =>{ setFilterStatus(e.target.value)
+    handlefilter()
+    }}
+    variant="outlined"
+    className="w-1/4"
   >
-    Add NewAdmin
+    <MenuItem value="all">Show All</MenuItem>
+    <MenuItem value="blocked">Blocked Admins</MenuItem>
+    <MenuItem value="unblocked">Unblocked Admins</MenuItem>
+  </TextField>
+
+  <Button variant="contained" color="primary" onClick={() => navigate("/home/add-admins")}>
+    Add New Admin
   </Button>
 </div>
 
@@ -194,90 +226,70 @@ function ManageAdmin() {
                 <TableCell className="font-semibold">#</TableCell>
                 <TableCell className="font-semibold">Full Name</TableCell>
                 <TableCell className="font-semibold">Email</TableCell>
-                <TableCell className="font-semibold">Actions</TableCell>
                 <TableCell className="font-semibold">Status</TableCell>
+                <TableCell className="font-semibold">Actions</TableCell>
               </TableRow>
             </TableHead>
 
             <TableBody>
-              {admins.length > 0 ? (
-                admins.map((admin, index) => (
-                  <TableRow key={admin._id} className="hover:bg-gray-100">
-                  <TableCell>{(currentPage - 1) * adminPerPage + index + 1}</TableCell>
-                    {/* <TableCell>{index + 1}</TableCell> */}
-                    <TableCell>{admin.name}</TableCell>
-                    <TableCell>{admin.email}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        color="success"
-                        size="small"
-                        onClick={() => handleOpenEditDialog(admin)}
-                      >
-                        Edit
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        color={admin.isblock ? "success" : "error"}
-                        size="small"
-                        onClick={() => blockandunblock(admin._id, admin.isblock)}
-                      >
-                        {admin.isblock ? "Unblock" : "Block"}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    No admins found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
+  {filterdata.length > 0 ? (
+    filterdata.map((admin, index) => (
+      <TableRow key={admin._id} className="hover:bg-gray-100">
+        <TableCell>{(currentPage - 1) * adminPerPage + index + 1}</TableCell>
+        <TableCell>{admin.name}</TableCell>
+        <TableCell>{admin.email}</TableCell>
+        <TableCell>
+          <Tooltip title={admin.isblock ? "Blocked" : "Active"}>
+            <span className={`px-2 py-1 text-white rounded ${admin.isblock ? "bg-red-500" : "bg-green-500"}`}>
+              {admin.isblock ? "Blocked" : "Active"}
+            </span>
+          </Tooltip>
+        </TableCell>
+        <TableCell>
+          <IconButton onClick={(event) => handleMenuClick(event, admin._id)}>
+            <MoreVertIcon />
+          </IconButton>
+          <Menu anchorEl={anchorEl} open={menuAdminId === admin._id} onClose={handleCloseMenu}>
+            <MenuItem onClick={() => handleOpenEditDialog(admin)}>Edit</MenuItem>
+            <MenuItem onClick={() => blockAndUnblock(admin._id, admin.isblock)}>
+              {admin.isblock ? "Unblock" : "Block"}
+            </MenuItem>
+          </Menu>
+        </TableCell>
+      </TableRow>
+    ))
+  ) : (
+    <TableRow>
+      <TableCell colSpan={5} align="center">
+        No admins found.
+      </TableCell>
+    </TableRow>
+  )}
+</TableBody>
+
           </Table>
         </TableContainer>
-        <div className="flex justify-center mt-4">
-                <Pagination
-                  count={totalPages}
-                  page={currentPage}
-                  onChange={(event, value) => setCurrentPage(value)}
-                  color="primary"
-                />
-              </div>
+
+        <div className="flex justify-end mt-4">
+        <Pagination count={totalPages} page={currentPage} onChange={(event, value) => setCurrentPage(value)} color="primary" />
+        </div>
+
+        <Dialog open={openEditDialog} onClose={handleCloseEditDialog}>
+          <DialogTitle>Edit Admin</DialogTitle>
+          <DialogContent>
+            <TextField label="Full Name" fullWidth margin="normal" value={editedName} onChange={(e) => setEditedName(e.target.value)} />
+            <TextField label="Email" fullWidth margin="normal" value={editedEmail} onChange={(e) => setEditedEmail(e.target.value)} />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseEditDialog} color="secondary">
+              Cancel
+            </Button>
+            <Button onClick={handleEditAdmin} color="primary" variant="contained">
+              Save Changes
+            </Button>
+          </DialogActions>
+        </Dialog>
       </div>
-
-      <Dialog open={openEditDialog} onClose={handleCloseEditDialog}>
-        <DialogTitle>Edit Admin</DialogTitle>
-        <DialogContent>
-          <TextField
-            label="Full Name"
-            fullWidth
-            margin="normal"
-            value={editedName}
-            onChange={(e) => setEditedName(e.target.value)}
-          />
-          <TextField
-            label="Email"
-            fullWidth
-            margin="normal"
-            value={editedEmail}
-            onChange={(e) => setEditedEmail(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseEditDialog} color="secondary">
-            Cancel
-          </Button>
-          <Button onClick={handleEditAdmin} color="primary" variant="contained">
-            Save Changes
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      
     </div>
   );
 }

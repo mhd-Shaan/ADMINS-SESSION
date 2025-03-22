@@ -1,35 +1,35 @@
-import axios from 'axios';
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { loginAdmin } from './Redux/adminSlice';
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { loginAdmin } from "./Redux/adminSlice";
 import toast, { Toaster } from "react-hot-toast";
-import './App.css';
+import "./App.css";
 
 function Login() {
   const [data, setData] = useState({ email: "", password: "" });
   const navigate = useNavigate();
   const adminState = useSelector((state) => state.admin);
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   const dispatch = useDispatch();
 
   useEffect(() => {
     if (token) {
-      navigate('/home');
+      navigate("/home");
     }
   }, [token]);
 
   const validate = () => {
     if (!data.email) {
-      toast.error('Email is required');
+      toast.error("Email is required");
       return false;
     }
     if (!data.password) {
-      toast.error('Password is required');
+      toast.error("Password is required");
       return false;
     }
     if (data.password.length < 6) {
-      toast.error('Password must be at least 6 characters long');
+      toast.error("Password must be at least 6 characters long");
       return false;
     }
     return true;
@@ -42,14 +42,17 @@ function Login() {
     const { email, password } = data;
 
     try {
-      const response = await axios.post('http://localhost:5000/loginadmins', { email, password });
+      const response = await axios.post(
+        "http://localhost:5000/loginadmins",
+        { email, password }
+      );
 
       if (response.data.error) {
         toast.error(response.data.error);
       } else if (response.data.token) {
         dispatch(loginAdmin({ admin: response.data.admin, token: response.data.token }));
-        localStorage.setItem('token', response.data.token);
-        navigate('/home');
+        localStorage.setItem("token", response.data.token);
+        navigate("/home");
       }
     } catch (error) {
       toast.error(error.response.data.error);
@@ -59,12 +62,17 @@ function Login() {
   return (
     <div
       className="min-h-screen flex items-center justify-center bg-cover bg-center relative"
-      style={{ backgroundImage: "url('https://img.freepik.com/premium-photo/car-accessories-with-copy-space_23-2149030423.jpg')" }}
+      style={{
+        backgroundImage:
+          "url('https://img.freepik.com/premium-photo/car-accessories-with-copy-space_23-2149030423.jpg')",
+      }}
     >
       <div className="absolute inset-0 bg-black/60"></div>
       <div className="relative bg-[#162a4b] p-8 rounded-3xl shadow-lg text-white w-[400px]">
         <h2 className="text-3xl font-bold text-center mb-4">Spare Mart</h2>
-        <p className="text-center text-gray-400 mb-6">Sign in to access your account.</p>
+        <p className="text-center text-gray-400 mb-6">
+          Sign in to access your account.
+        </p>
         <form onSubmit={loginadmins}>
           <div className="mb-4">
             <input

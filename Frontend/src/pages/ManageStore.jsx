@@ -23,7 +23,7 @@ function ManageStore() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log(pendingResponse.data.StoreDetails);
+      console.log('pendingstore',pendingResponse.data.StoreDetails);
       setStores(pendingResponse.data.StoreDetails);
     } catch (error) {
       console.error("Error fetching pending stores:", error);
@@ -40,6 +40,8 @@ function ManageStore() {
         }
       );
       setApprovedStores(approvedResponse.data.StoreDetails || []);
+      console.log(approvedResponse.data.StoreDetails,'approved');
+      
     } catch (error) {
       console.error("Error fetching approved stores:", error);
       toast.error(error.response.data.error);
