@@ -22,6 +22,7 @@ import { Toaster } from "react-hot-toast";
 import ManageUsers from "./pages/ManageUsers";
 import ManageProducts from "./pages/ManageProducts";
 import ProfileDetails from "./components/ProfileDetails";
+import EditPassword from "./pages/EditPassword";
 
 function App() {
   const [admins, setAdmin] = useState(null); // Initialize as null
@@ -69,6 +70,7 @@ function App() {
         {/* Public Route */}
         <Route path="/" element={<Login />} />
        <Route path="/profile" element={<ProfileDetails/>}></Route>
+       <Route path="/reset-password" element={<EditPassword/>}></Route>
         <Route
           path="/home"
           element={

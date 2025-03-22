@@ -1,4 +1,3 @@
-import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -7,26 +6,22 @@ const ProfileDetails = () => {
   const { admin } = useSelector((state) => state.admin);
   const navigate = useNavigate();
 
-  // Initialize state
   const [user, setUser] = useState({
     name: "",
     email: "",
-    password: "",
     role: "",
   });
 
-  // Update state when admin data is available
+
   useEffect(() => {
     if (admin) {
       setUser({
-        name: admin.name ,
-        email: admin.email ,
-        password: "********", // Keep masked for security
-        role: admin.role ,
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
       });
     }
-  }, [admin]); 
-
+  }, [admin]);
 
   return (
     <div className="max-w-md mx-auto mt-10 bg-white p-6 shadow-lg rounded-lg">
@@ -44,20 +39,22 @@ const ProfileDetails = () => {
         </div>
 
         <div className="flex justify-between">
-          <span className="font-medium text-gray-600">Password:</span>
-          <span className="text-gray-800">{user.password}</span>
-        </div>
-
-        <div className="flex justify-between">
           <span className="font-medium text-gray-600">Role:</span>
           <span className="text-gray-800">{user.role}</span>
         </div>
+
+        <button
+        onClick={() => navigate("/reset-password", { state: { Email: user.email } })}
+        className="mt-4 w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition"
+      >
+        Reset Password
+      </button>
       </div>
 
       {/* Back Button */}
       <button
-        onClick={() => navigate(-1)}
-        className="mt-6 w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition"
+        onClick={() => navigate('/home')}
+        className="mt-6 w-full bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition"
       >
         Back
       </button>

@@ -55,7 +55,7 @@ function Login() {
         navigate("/home");
       }
     } catch (error) {
-      toast.error(error.response.data.error);
+      toast.error(error.response?.data?.error || "Something went wrong");
     }
   };
 
@@ -97,6 +97,17 @@ function Login() {
             Login
           </button>
         </form>
+
+        {/* ✅ Forgot Password Link */}
+        <p className="text-center mt-3 text-gray-300 text-sm">
+          <span
+            className="text-blue-400 cursor-pointer hover:underline"
+            onClick={() => navigate("/reset-password")}
+          >
+            Forgot Password?
+          </span>
+        </p>
+
         <div className="absolute -top-6 right-6 w-12 h-12 bg-[#0b1a30] rounded-full flex items-center justify-center shadow-md">
           <span className="text-xl">🔧</span>
         </div>
