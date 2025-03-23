@@ -2,6 +2,7 @@ import admins from "../models/superadmin.js";
 import authHelper from "../helpers/auth.js";
 import jwt from "jsonwebtoken";
 import { sendAdminCredentials } from "../helpers/emailService.js";
+import OTPVerification from "../models/otpScehma.js";
 
 const { hashPassword, comparePassword } = authHelper;
 
@@ -229,7 +230,7 @@ export const updatePassword = async(req,res)=>{
         if (!admin) {
           return res.status(404).json({ error: "this email is not registred" });
       }
-
+         
         const hashedPassword = await hashPassword(password);
 
         admin.password = hashedPassword;

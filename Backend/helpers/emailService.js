@@ -14,7 +14,6 @@ const transporter = nodemailer.createTransport({
 });
 
 
-// Function to send admin login details via email
 export const sendAdminCredentials = async (email, password) => {
 
     try {
@@ -37,3 +36,23 @@ export const sendAdminCredentials = async (email, password) => {
         console.error('❌ Error sending email:', error);
     }
 };
+
+export const sendOTPEmail = async (email, otp) => {
+    try {
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "Your OTP for Password Reset - Spare Wala",
+        html: `
+          <h2>Password Reset OTP</h2>
+          <p>Your OTP for resetting your password is: <strong>${otp}</strong></p>
+          <p>This OTP will expire in 5 minutes.</p>
+        `,
+      };
+  
+      await transporter.sendMail(mailOptions);
+      console.log("✅ OTP sent successfully");
+    } catch (error) {
+      console.error("❌ Error sending OTP email:", error);
+    }
+  };
