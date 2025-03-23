@@ -1,5 +1,21 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Avatar } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import {
+  Avatar,
+  IconButton,
+  Menu,
+  MenuItem,
+  Tooltip,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Pagination,
+  Chip,
+} from "@mui/material";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
@@ -8,6 +24,11 @@ function ManageStore() {
   const [stores, setStores] = useState([]);
   const [approvedStores, setApprovedStores] = useState([]);
   const [activeTab, setActiveTab] = useState("pending");
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedStoreId, setSelectedStoreId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const storesPerPage = 10;
 
   useEffect(() => {
     pendingstores();
@@ -23,7 +44,6 @@ function ManageStore() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log('pendingstore',pendingResponse.data.StoreDetails);
       setStores(pendingResponse.data.StoreDetails);
     } catch (error) {
       console.error("Error fetching pending stores:", error);
@@ -40,8 +60,6 @@ function ManageStore() {
         }
       );
       setApprovedStores(approvedResponse.data.StoreDetails || []);
-      console.log(approvedResponse.data.StoreDetails,'approved');
-      
     } catch (error) {
       console.error("Error fetching approved stores:", error);
       toast.error(error.response.data.error);
@@ -61,6 +79,7 @@ function ManageStore() {
       const approvedStore = stores.find((store) => store._id === storeId);
       setApprovedStores([...approvedStores, approvedStore]);
       setStores(stores.filter((store) => store._id !== storeId));
+      toast.success("Store approved successfully");
     } catch (error) {
       console.error("Error approving store:", error);
     }
@@ -77,6 +96,7 @@ function ManageStore() {
         }
       );
       setStores(stores.filter((store) => store._id !== storeId));
+      toast.success("Store rejected successfully");
     } catch (error) {
       console.error("Error rejecting store:", error);
     }
@@ -97,16 +117,30 @@ function ManageStore() {
           store._id === storeId ? { ...store, isBlocked: !isBlocked } : store
         )
       );
+      toast.success(`Store ${!isBlocked ? "blocked" : "unblocked"} successfully`);
     } catch (error) {
       console.error("Error toggling block status:", error);
     }
   };
 
+  const handleMenuClick = (event, storeId) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedStoreId(storeId);
+  };
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+    setSelectedStoreId(null);
+  };
+
+  const handleViewStore = (storeId) => {
+    // Navigate to store details page
+    console.log("View store:", storeId);
+    handleCloseMenu();
+  };
+
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <h2 className="text-2xl font-semibold mb-4 text-center">Manage Stores</h2>
-
-      {/* Tabs Section */}
       <div className="flex justify-center border-b">
         <button
           className={`px-4 py-2 w-1/2 text-center ${
@@ -132,83 +166,107 @@ function ManageStore() {
 
       {/* Table Section */}
       <div className="overflow-x-auto bg-white shadow-md rounded-lg p-4 mt-4">
-        <table className="w-full border-collapse text-sm md:text-base">
-          <thead className="bg-gray-200">
-            <tr className="text-gray-700 text-left">
-              <th className="p-3 border">#</th>
-              <th className="p-3 border">Store Name</th>
-              <th className="p-3 border hidden sm:table-cell">Email</th>
-              <th className="p-3 border hidden md:table-cell">Phone</th>
-              <th className="p-3 border text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(activeTab === "pending" ? stores : approvedStores).length > 0 ? (
-              (activeTab === "pending" ? stores : approvedStores).map(
-                (store, index) => (
-                  <tr key={store._id} className="border-b text-gray-700">
-                    <td className="p-3 border text-center">{index + 1}</td>
-                    <td className="p-3 border">
-                      <Link
-                        to="/home/manage-store/manageproducts"
-                        state={{ store }}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {store.shopName}
-                      </Link>
-                    </td>
-
-                    <td className="p-3 border hidden sm:table-cell">
-                      {store.email}
-                    </td>
-                    <td className="p-3 border hidden md:table-cell">
-                      {store.mobileNumber}
-                    </td>
-                    <td className="p-3 border text-center">
-                      {activeTab === "pending" ? (
-                        <div className="flex justify-center space-x-2">
-                          <button
-                            onClick={() => approvingStore(store._id)}
-                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md"
-                          >
-                            Accept
-                          </button>
-                          <button
-                            onClick={() => rejectingStore(store._id)}
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() =>
-                            toggleBlockStore(store._id, store.isBlocked)
-                          }
-                          className={`px-3 py-1 rounded-md ${
-                            store.isBlocked
-                              ? "bg-gray-500 hover:bg-gray-600 text-white"
-                              : "bg-red-500 hover:bg-red-600 text-white"
-                          }`}
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow className="bg-gray-200">
+                <TableCell>#</TableCell>
+                <TableCell>Store Name</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {(activeTab === "pending" ? stores : approvedStores).length > 0 ? (
+                (activeTab === "pending" ? stores : approvedStores).map(
+                  (store, index) => (
+                    <TableRow key={store._id}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>
+                        <Link
+                          to="/home/manage-store/manageproducts"
+                          state={{ store }}
+                          className="text-blue-600 hover:underline"
                         >
-                          {store.isBlocked ? "Unblock" : "Block"}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
+                          {store.shopName}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{store.email}</TableCell>
+                      <TableCell>
+                        {activeTab === "approved" ? (
+                          <Chip
+                            label={store.isBlocked ? "Blocked" : "Active"}
+                            color={store.isBlocked ? "error" : "success"}
+                            size="small"
+                          />
+                        ) : (
+                          <Chip
+                            label="Pending"
+                            color="warning"
+                            size="small"
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          onClick={(event) => handleMenuClick(event, store._id)}
+                        >
+                          <MoreVertIcon />
+                        </IconButton>
+                        <Menu
+                          anchorEl={anchorEl}
+                          open={selectedStoreId === store._id}
+                          onClose={handleCloseMenu}
+                        >
+                          {activeTab === "pending" ? (
+                            <>
+                              <MenuItem onClick={() => approvingStore(store._id)}>
+                                Accept
+                              </MenuItem>
+                              <MenuItem onClick={() => rejectingStore(store._id)}>
+                                Reject
+                              </MenuItem>
+                            </>
+                          ) : (
+                            <MenuItem
+                              onClick={() =>
+                                toggleBlockStore(store._id, store.isBlocked)
+                              }
+                            >
+                              {store.isBlocked ? "Unblock" : "Block"}
+                            </MenuItem>
+                          )}
+                          <MenuItem onClick={() => handleViewStore(store._id)}>
+                            View
+                          </MenuItem>
+                        </Menu>
+                      </TableCell>
+                    </TableRow>
+                  )
                 )
-              )
-            ) : (
-              <tr>
-                <td colSpan="5" className="text-center p-4 text-gray-500">
-                  {activeTab === "pending"
-                    ? "No pending stores."
-                    : "No approved stores."}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} align="center">
+                    {activeTab === "pending"
+                      ? "No pending stores."
+                      : "No approved stores."}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-center mt-4">
+        <Pagination
+          count={totalPages}
+          page={currentPage}
+          onChange={(event, value) => setCurrentPage(value)}
+          color="primary"
+        />
       </div>
     </div>
   );
