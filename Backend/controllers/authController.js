@@ -96,7 +96,9 @@ export const loginadmins = async (req, res) => {
 
 export const getadmins = async (req, res) => {
   try {
-    const { page = 1, limit = 10 ,search=''} = req.query; 
+    const { page = 1, limit = 10 ,search='',status='all'} = req.query; 
+    console.log(status);
+    
 
     
     const skip = (page - 1) * limit; 
@@ -108,6 +110,11 @@ export const getadmins = async (req, res) => {
       ],
     };
 
+    if (status === "blocked") {
+      searchFilter.isblock = true;
+    } else if (status === "unblocked") {
+      searchFilter.isblock = false;
+    }
 
     const totaladmins = await admins.countDocuments(searchFilter)
 

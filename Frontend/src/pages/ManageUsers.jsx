@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
-  Paper, Button, Pagination, TextField, InputAdornment, IconButton 
+  Paper, Button, Pagination, TextField, InputAdornment, IconButton, 
+  MenuItem
 } from "@mui/material";
 import toast from "react-hot-toast";
 import SearchIcon from "@mui/icons-material/Search";
@@ -12,18 +13,21 @@ function ManageUsers() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+    const [filterStatus, setFilterStatus] = useState("all");
+  
   const usersPerPage = 10; 
 
   useEffect(() => {
     fetchUsers();
-  }, [currentPage,searchQuery]);
+  }, [currentPage,searchQuery,filterStatus]);
+
 
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
         "http://localhost:5000/getallusers",{
-        params: { page: currentPage, limit: usersPerPage, search: searchQuery },
+        params: { page: currentPage, limit: usersPerPage, search: searchQuery,status:filterStatus },
          headers: { Authorization: `Bearer ${token}` },
     })
     
@@ -66,12 +70,10 @@ function ManageUsers() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
       <div className="w-full max-w-6xl bg-white shadow-lg rounded-lg p-6">
-        
-
+      <div className="flex justify-between items-center mb-4 gap-4">
         <TextField
           label="Search"
           variant="outlined"
-          fullWidth
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
           InputProps={{
@@ -83,8 +85,23 @@ function ManageUsers() {
               </InputAdornment>
             ),
           }}
-          className="mb-4"
+          className="w-3/4"
         />
+
+        
+                  <TextField
+                    select
+                    label="Filter"
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    variant="outlined"
+                    className="w-1/4"
+                  >
+                    <MenuItem value="all">Show All</MenuItem>
+                    <MenuItem value="blocked">Blocked Admins</MenuItem>
+                    <MenuItem value="unblocked">Unblocked Admins</MenuItem>
+                  </TextField>
+                  </div>
 
         <h2 className="text-xl font-semibold mb-4">Manage Users</h2>
         

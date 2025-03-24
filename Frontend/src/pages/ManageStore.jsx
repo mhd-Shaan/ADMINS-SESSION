@@ -14,37 +14,55 @@ import {
   TableRow,
   Pagination,
   Chip,
+  TextField,
+  InputAdornment,
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import SearchIcon from "@mui/icons-material/Search";
+
 
 function ManageStore() {
   const [stores, setStores] = useState([]);
   const [approvedStores, setApprovedStores] = useState([]);
+    const [filteredAdmins, setFilteredAdmins] = useState([]);
   const [activeTab, setActiveTab] = useState("pending");
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedStoreId, setSelectedStoreId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const storesPerPage = 10;
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  
+  const navigate = useNavigate()
+  const storesPerPage = 10
 
   useEffect(() => {
-    pendingstores();
-    Approvedstores();
-  }, []);
+    if (activeTab === "pending") {
+      pendingstores();
+    } else {
+      Approvedstores();
+    }
+  }, [currentPage, activeTab,searchQuery,filterStatus]); 
 
   const pendingstores = async () => {
     try {
       const token = localStorage.getItem("token");
       const pendingResponse = await axios.get(
-        "http://localhost:5000/getstorespending",
-        {
+        "http://localhost:5000/getstorespending",{
+        params: {
+          page: currentPage,
+          limit: storesPerPage,
+          search: searchQuery,
+        },
           headers: { Authorization: `Bearer ${token}` },
-        }
+      }
       );
       setStores(pendingResponse.data.StoreDetails);
+      setTotalPages(pendingResponse.data.totalPages)
+      
     } catch (error) {
       console.error("Error fetching pending stores:", error);
     }
@@ -54,12 +72,20 @@ function ManageStore() {
     try {
       const token = localStorage.getItem("token");
       const approvedResponse = await axios.get(
-        "http://localhost:5000/getstores",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        "http://localhost:5000/getstores",{
+          params: {
+            page: currentPage,
+            limit: storesPerPage,
+            search: searchQuery,
+            status:filterStatus,
+          },
+        headers: { Authorization: `Bearer ${token}` },
+      }
       );
       setApprovedStores(approvedResponse.data.StoreDetails || []);
+      
+      setTotalPages(approvedResponse.data.totalPages)
+
     } catch (error) {
       console.error("Error fetching approved stores:", error);
       toast.error(error.response.data.error);
@@ -80,6 +106,7 @@ function ManageStore() {
       setApprovedStores([...approvedStores, approvedStore]);
       setStores(stores.filter((store) => store._id !== storeId));
       toast.success("Store approved successfully");
+      handleCloseMenu()
     } catch (error) {
       console.error("Error approving store:", error);
     }
@@ -97,6 +124,8 @@ function ManageStore() {
       );
       setStores(stores.filter((store) => store._id !== storeId));
       toast.success("Store rejected successfully");
+      handleCloseMenu()
+
     } catch (error) {
       console.error("Error rejecting store:", error);
     }
@@ -118,6 +147,8 @@ function ManageStore() {
         )
       );
       toast.success(`Store ${!isBlocked ? "blocked" : "unblocked"} successfully`);
+      handleCloseMenu()
+
     } catch (error) {
       console.error("Error toggling block status:", error);
     }
@@ -133,14 +164,50 @@ function ManageStore() {
     setSelectedStoreId(null);
   };
 
-  const handleViewStore = (storeId) => {
-    // Navigate to store details page
-    console.log("View store:", storeId);
+  const handleViewStore = (store) => {
+    console.log(store);
+    
+    navigate('/home/Storedetails' ,{ state: { storeDetails: store } })
     handleCloseMenu();
   };
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
+      <div className=" bg-gray-100 ">
+  <div className="flex items-center gap-4">  {/* Flex container with spacing */}
+    <TextField
+      label="Search"
+      variant="outlined"
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      InputProps={{
+        endAdornment: (
+          <InputAdornment position="end">
+            <IconButton>
+              <SearchIcon />
+            </IconButton>
+          </InputAdornment>
+        ),
+      }}
+      className="w-full md:w-5/6"
+    />
+
+    {activeTab === 'approved' && (
+      <TextField
+        select
+        label="Filter"
+        value={filterStatus}
+        onChange={(e) => setFilterStatus(e.target.value)}
+        variant="outlined"
+        className="w-full md:w-1/4"
+      >
+        <MenuItem value="all">Show All</MenuItem>
+        <MenuItem value="blocked">Blocked Stores</MenuItem>
+        <MenuItem value="unblocked">Unblocked Stores</MenuItem>
+      </TextField>
+    )}
+  </div>
+</div>
       <div className="flex justify-center border-b">
         <button
           className={`px-4 py-2 w-1/2 text-center ${
@@ -163,13 +230,15 @@ function ManageStore() {
           Approved Stores
         </button>
       </div>
-
+      
       {/* Table Section */}
       <div className="overflow-x-auto bg-white shadow-md rounded-lg p-4 mt-4">
+
+
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
-              <TableRow className="bg-gray-200">
+                    <TableRow className="bg-gray-200">
                 <TableCell>#</TableCell>
                 <TableCell>Store Name</TableCell>
                 <TableCell>Email</TableCell>
@@ -219,16 +288,16 @@ function ManageStore() {
                           open={selectedStoreId === store._id}
                           onClose={handleCloseMenu}
                         >
-                          {activeTab === "pending" ? (
-                            <>
+                          {activeTab === "pending" ? [
+                         
+                          
                               <MenuItem onClick={() => approvingStore(store._id)}>
                                 Accept
-                              </MenuItem>
+                              </MenuItem>,
                               <MenuItem onClick={() => rejectingStore(store._id)}>
                                 Reject
-                              </MenuItem>
-                            </>
-                          ) : (
+                              </MenuItem>,
+                           ] : [
                             <MenuItem
                               onClick={() =>
                                 toggleBlockStore(store._id, store.isBlocked)
@@ -236,8 +305,8 @@ function ManageStore() {
                             >
                               {store.isBlocked ? "Unblock" : "Block"}
                             </MenuItem>
-                          )}
-                          <MenuItem onClick={() => handleViewStore(store._id)}>
+                          ]}
+                          <MenuItem onClick={() => handleViewStore(store)}>
                             View
                           </MenuItem>
                         </Menu>

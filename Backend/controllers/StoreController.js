@@ -3,11 +3,20 @@ import Stores from "../models/stores.js"
 
 export const GetStorespending =async(req,res)=>{
     try {
-      const { page = 1, limit = 10 } = req.query; // Default values: page 1, 10 users per page
+      const { page = 1, limit = 10 ,search=''} = req.query; // Default values: page 1, 10 users per page
         const skip = (page - 1) * limit; 
+        const searchFilter = {
+          status: "pending",
+          $or: [
+            { name: { $regex: search, $options: "i" } }, 
+            { email: { $regex: search, $options: "i" } }, 
+          ],
+        };
 
-        const totalStores = await Stores.countDocuments(); // Total user count
-        const StoreDetails = await Stores.find({status:"pending"}).skip(skip).limit(Number(limit));
+       
+
+        const totalStores = await Stores.countDocuments(searchFilter); // Total user count
+        const StoreDetails = await Stores.find(searchFilter).skip(skip).limit(Number(limit));
 
         
         if (!StoreDetails.length) {
@@ -29,11 +38,25 @@ export const GetStorespending =async(req,res)=>{
 export const GetStores =async(req,res)=>{
     try {
 
-      const { page = 1, limit = 10 } = req.query; // Default values: page 1, 10 users per page
+      const { page = 1, limit = 10,search='',status="all" } = req.query; // Default values: page 1, 10 users per page
       const skip = (page - 1) * limit; 
 
-      const totalStores = await Stores.countDocuments(); // Total user count
-      const StoreDetails = await Stores.find({status:"approved"}).skip(skip).limit(Number(limit));
+      const searchFilter = {
+        status: "approved",
+        $or: [
+          { name: { $regex: search, $options: "i" } }, 
+          { email: { $regex: search, $options: "i" } }, 
+        ],
+      };
+
+      if(status==='blocked'){
+        searchFilter.isBlocked=true
+      }else if(status === 'unblocked'){
+        searchFilter.isBlocked=false
+      }
+
+      const totalStores = await Stores.countDocuments(searchFilter); // Total user count
+      const StoreDetails = await Stores.find(searchFilter).skip(skip).limit(Number(limit));
 
         res.status(200).json({
           StoreDetails,

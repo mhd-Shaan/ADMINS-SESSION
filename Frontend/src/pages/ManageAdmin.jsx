@@ -28,7 +28,6 @@ import toast from "react-hot-toast";
 
 function ManageAdmin() {
   const [admins, setAdmins] = useState([]);
-  const [filteredAdmins, setFilteredAdmins] = useState([]);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
   const [editedName, setEditedName] = useState("");
@@ -44,11 +43,10 @@ function ManageAdmin() {
 
   useEffect(() => {
     fetchAdmins();
-  }, [currentPage, searchQuery]);
+  }, [currentPage, searchQuery,filterStatus]);
 
-  useEffect(() => {
-    applyFilters();
-  }, [admins, filterStatus]);
+ 
+
 
   const fetchAdmins = async () => {
     try {
@@ -58,10 +56,11 @@ function ManageAdmin() {
           page: currentPage,
           limit: adminsPerPage,
           search: searchQuery,
+          status:filterStatus,
         },
         headers: { Authorization: `Bearer ${token}` },
       });
-
+     
       setAdmins(response.data.adminlist);
       setTotalPages(response.data.totalPages);
     } catch (error) {
@@ -69,15 +68,6 @@ function ManageAdmin() {
     }
   };
 
-  const applyFilters = () => {
-    let filtered = admins;
-    if (filterStatus === "blocked") {
-      filtered = admins.filter((admin) => admin.isblock);
-    } else if (filterStatus === "unblocked") {
-      filtered = admins.filter((admin) => !admin.isblock);
-    }
-    setFilteredAdmins(filtered);
-  };
 
   const handleOpenEditDialog = (admin) => {
     setSelectedAdmin(admin);
@@ -216,8 +206,8 @@ function ManageAdmin() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredAdmins.length > 0 ? (
-                filteredAdmins.map((admin, index) => (
+              {admins.length > 0 ? (
+                admins.map((admin, index) => (
                   <TableRow key={admin._id}>
                     <TableCell>
                       {(currentPage - 1) * adminsPerPage + index + 1}

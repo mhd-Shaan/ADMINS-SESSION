@@ -31,8 +31,11 @@ export const userblockandunblock= async(req,res)=>{
 
 export const GetUsers = async (req, res) => {
   try {
-      const { page = 1, limit = 10 ,search=''} = req.query; // Default values: page 1, 10 users per page
+    
+      const { page = 1, limit = 10 ,search='',status='all'} = req.query; // Default values: page 1, 10 users per page
       const skip = (page - 1) * limit; 
+      console.log(status);
+
 
       const searchFilter = {
         $or: [
@@ -40,6 +43,12 @@ export const GetUsers = async (req, res) => {
           { email: { $regex: search, $options: "i" } }, 
         ],
       };
+
+      if(status === 'blocked'){
+        searchFilter.isBlocked=true
+      }else if(status === 'unblocked'){
+        searchFilter.isBlocked=false
+      }
 
       const totalUsers = await Users.countDocuments(searchFilter); // Total user count
       const userdetails = await Users.find(searchFilter).skip(skip).limit(Number(limit));

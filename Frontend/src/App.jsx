@@ -20,9 +20,9 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Toaster } from "react-hot-toast";
 import ManageUsers from "./pages/ManageUsers";
-import ManageProducts from "./pages/ManageProducts";
 import ProfileDetails from "./components/ProfileDetails";
 import EditPassword from "./pages/EditPassword";
+import StoreDetails from "./pages/StoreDetails";
 
 function App() {
   const [admins, setAdmin] = useState(null); // Initialize as null
@@ -101,7 +101,7 @@ function App() {
           />
           <Route path="add-admins" element={<AddAdmin />} />
           <Route path="adminsuspended" element={<Adminsuspended />} />
-          <Route path="manage-store/manageproducts" element={<ManageProducts/>}></Route>
+          <Route path="Storedetails" element={<StoreDetails/>}></Route>
         </Route>
       </Routes>
     </Router>
