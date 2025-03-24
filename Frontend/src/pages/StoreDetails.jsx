@@ -36,8 +36,6 @@ const StoreDetails = () => {
         {/* Personal Details */}
         {tabIndex === 0 && (
           <CardContent className="p-6">
-            <Typography variant="h6" className="font-bold mb-4">Personal Information</Typography>
-            <Divider className="mb-4" />
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6} className="flex items-center">
                 <LocationOnIcon className="text-blue-600 mr-2" />
@@ -58,8 +56,6 @@ const StoreDetails = () => {
         {/* Shop Details */}
         {tabIndex === 1 && (
           <CardContent className="p-6">
-            <Typography variant="h6" className="font-bold mb-4">Shop Information</Typography>
-            <Divider className="mb-4" />
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6} className="flex items-center">
                 <GavelIcon className="text-blue-600 mr-2" />
@@ -80,8 +76,6 @@ const StoreDetails = () => {
         {/* PickUp Details */}
         {tabIndex === 2 && (
           <CardContent className="p-6">
-            <Typography variant="h6" className="font-bold mb-4">Pickup Details</Typography>
-            <Divider className="mb-4" />
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6} className="flex items-center">
                 <StoreIcon className="text-blue-600 mr-2" />
