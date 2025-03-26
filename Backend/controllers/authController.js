@@ -97,7 +97,6 @@ export const loginadmins = async (req, res) => {
 export const getadmins = async (req, res) => {
   try {
     const { page = 1, limit = 10 ,search='',status='all'} = req.query; 
-    console.log(status);
     
 
     
@@ -109,6 +108,7 @@ export const getadmins = async (req, res) => {
         { email: { $regex: search, $options: "i" } }, 
       ],
     };
+
 
     if (status === "blocked") {
       searchFilter.isblock = true;
