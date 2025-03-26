@@ -31,6 +31,7 @@ export const sendAdminCredentials = async (email, password) => {
         <p>Best Regards,</p>
         <p><strong>Spare Wala Team</strong></p>
       `,
+
     };
 
 
