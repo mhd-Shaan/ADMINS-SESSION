@@ -1,123 +1,355 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { useLocation, useNavigate } from "react-router-dom";
+import {
+  Button,
+  TextField,
+  Typography,
+  Box,
+  Paper,
+  CircularProgress,
+  Alert,
+} from "@mui/material";
+import { Send, Refresh, CheckCircle } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
-const EditPassword = () => {
+const OTPVerification = ({ email: initialEmail, onComplete }) => {
+  const [step, setStep] = useState(1);
+  const [email, setEmail] = useState(initialEmail || "");
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [password, setPassword] = useState("");
-  const [confirmpassword, setConfirmPassword] = useState("");
-  const [email, setEmail] = useState(""); // ✅ State for email
-
-  const location = useLocation();
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [resendTimer, setResendTimer] = useState(30);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const inputRefs = useRef([]);
   const navigate = useNavigate();
-  const { Email } = location.state || {}; // ✅ Get email from state
 
-  // ✅ Use useEffect to set email once
+  const { admin } = useSelector((state) => state.admin);
+
   useEffect(() => {
-    if (Email) {
-      setEmail(Email);
+    if (resendTimer > 0 && step === 2) {
+      const interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
     }
-  }, [Email]);
+  }, [resendTimer, step]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (admin) {
+      setEmail(admin.email);
+    }
+  }, [admin]);
 
+  const handleSendOtp = async () => {
     if (!email) {
-      alert("Email is required!");
-      return;
-    }
-    if (!password) {
-      alert("password is required");
-      return;
-    }
-    if (!confirmpassword) {
-      alert("confirm password is required");
-      return;
-    }
-    if (password.length < 6) {
-      alert("password must be 6-digit minimum");
+      setError("Please enter your email");
       return;
     }
 
-    if (password !== confirmpassword) {
-      alert("Passwords do not match");
-      return;
-    }
-
+    setLoading(true);
+    setError("");
     try {
-      const response = await axios.post(
-        "http://localhost:5000/updatepassword",
-        {
-          email,
-          password,
-          confirmpassword,
-        }
-      );
-      alert(response.data.message);
-      {Email?navigate("/profile"):navigate("/")} // ✅ Redirect to Profile page after success
-    } catch (error) {
-      alert(error.response?.data?.error || "Something went wrong");
+      await axios.post("http://localhost:5000/send-otp", { email });
+      setSuccess("OTP sent successfully!");
+      setStep(2);
+      setResendTimer(30);
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to send OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpChange = (index, value) => {
+    if (!/^\d*$/.test(value)) return;
+
+    const newOtp = [...otp];
+    newOtp[index] = value.substring(value.length - 1);
+    setOtp(newOtp);
+
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      const newOtp = [...otp];
+      newOtp[index - 1] = "";
+      setOtp(newOtp);
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    const otpCode = otp.join("");
+    if (otpCode.length !== 6) {
+      setError("Please enter a valid 6-digit OTP");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      await axios.post("http://localhost:5000/verify-otp", {
+        email,
+        otp: otpCode,
+      });
+      setSuccess("OTP verified successfully!");
+      setStep(3);
+    } catch (err) {
+      setError(err.response?.data?.error || "Invalid OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (resendTimer > 0) return;
+
+    setLoading(true);
+    setError("");
+    try {
+      await axios.post("http://localhost:5000/send-otp", { email });
+      setSuccess("New OTP sent successfully!");
+      setResendTimer(30);
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to resend OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSetPassword = async () => {
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      await axios.post("http://localhost:5000/set-password", {
+        email,
+        password,
+        confirmPassword,
+      });
+      setSuccess("Password set successfully!");
+      if (onComplete) onComplete();
+      {admin ? navigate("/home") : navigate("/")}
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to set password");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 bg-white p-6 shadow-lg rounded-lg">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-        Reset Password
-      </h2>
-
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div>
-          <label className="block text-gray-600 font-medium">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            readOnly={!!Email}
-            className= {Email?"w-full p-2 border rounded bg-gray-200 cursor-not-allowed":"w-full p-2 border rounded"}
-          />
-        </div>
-
-        <div>
-          <label className="block text-gray-600 font-medium">
-            New Password
-          </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-
-        <div>
-          <label className="block text-gray-600 font-medium">
-            Confirm Password
-          </label>
-          <input
-            type="password"
-            value={confirmpassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition"
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
+      <Paper className="w-full max-w-md p-6 md:p-8 rounded-lg shadow-lg">
+        <Typography
+          variant="h5"
+          className="text-center font-bold mb-6 text-gray-800"
         >
-          Update Password
-        </button>
-      </form>
+          {step === 1
+            ? "Enter Your Email"
+            : step === 2
+            ? "Verify OTP"
+            : "Set New Password"}
+        </Typography>
 
-      <button
-  onClick={Email ? () => navigate("/profile") : () => navigate("/")}
-  className="mt-3 w-full bg-gray-400 text-white py-2 px-4 rounded-lg hover:bg-gray-500 transition"
->
-  Cancel
-</button>
+        {/* Progress indicator */}
+        <div className="flex justify-center mb-8">
+          <div className="flex items-center">
+            {[1, 2, 3].map((stepNumber) => (
+              <React.Fragment key={stepNumber}>
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-full 
+                  ${
+                    step === stepNumber
+                      ? "bg-blue-600 text-white"
+                      : step > stepNumber
+                      ? "bg-green-500 text-white"
+                      : "bg-gray-200 text-gray-600"
+                  }`}
+                >
+                  {step > stepNumber ? (
+                    <CheckCircle className="w-5 h-5" />
+                  ) : (
+                    stepNumber
+                  )}
+                </div>
+                {stepNumber < 3 && (
+                  <div
+                    className={`w-12 h-1 ${
+                      step > stepNumber ? "bg-green-500" : "bg-gray-200"
+                    }`}
+                  ></div>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
 
+        {/* Error/Success messages */}
+        {error && (
+          <Alert severity="error" className="mb-4">
+            {error}
+          </Alert>
+        )}
+        {success && (
+          <Alert severity="success" className="mb-4">
+            {success}
+          </Alert>
+        )}
+
+        {/* Step 1: Email Input */}
+        {step === 1 && (
+          <div className="space-y-4">
+            <TextField
+              label="Email Address"
+              variant="outlined"
+              fullWidth
+              value={email}
+              disabled={admin} // Disables input if "admin" is true
+              onChange={!admin ? (e) => setEmail(e.target.value):'' } // Allows change only if "admin" is false
+              type="email"
+              className="mb-4"
+            />
+
+            <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={handleSendOtp}
+              disabled={loading}
+              startIcon={
+                loading ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <Send />
+                )
+              }
+              className="h-12"
+            >
+              Send OTP
+            </Button>
+          </div>
+        )}
+
+        {/* Step 2: OTP Verification */}
+        {step === 2 && (
+          <div className="space-y-6">
+            <Typography
+              variant="body1"
+              className="text-center text-gray-600 mb-4"
+            >
+              We've sent a 6-digit code to{" "}
+              <span className="font-semibold">{email}</span>
+            </Typography>
+
+            <div className="flex justify-center space-x-2 mb-6">
+              {otp.map((digit, index) => (
+                <TextField
+                  key={index}
+                  inputRef={(el) => (inputRefs.current[index] = el)}
+                  value={digit}
+                  onChange={(e) => handleOtpChange(index, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(index, e)}
+                  inputProps={{
+                    maxLength: 1,
+                    style: { textAlign: "center", fontSize: "1.25rem" },
+                  }}
+                  variant="outlined"
+                  className="w-12"
+                />
+              ))}
+            </div>
+
+            <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={handleVerifyOtp}
+              disabled={loading || otp.join("").length !== 6}
+              className="h-12 mb-4"
+            >
+              {loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Verify OTP"
+              )}
+            </Button>
+
+            <Button
+              fullWidth
+              variant="outlined"
+              color="secondary"
+              onClick={handleResendOtp}
+              disabled={resendTimer > 0 || loading}
+              startIcon={<Refresh />}
+            >
+              {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend OTP"}
+            </Button>
+          </div>
+        )}
+
+        {/* Step 3: Password Setup */}
+        {step === 3 && (
+          <div className="space-y-4">
+            <TextField
+              label="New Password"
+              variant="outlined"
+              type="password"
+              fullWidth
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="mb-4"
+              helperText="Minimum 6 characters"
+            />
+
+            <TextField
+              label="Confirm Password"
+              variant="outlined"
+              type="password"
+              fullWidth
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="mb-6"
+            />
+
+            <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={handleSetPassword}
+              disabled={
+                loading || password.length < 6 || password !== confirmPassword
+              }
+              className="h-12"
+            >
+              {loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Set Password"
+              )}
+            </Button>
+          </div>
+        )}
+      </Paper>
     </div>
   );
 };
 
-export default EditPassword;
+export default OTPVerification;

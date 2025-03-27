@@ -1,8 +1,9 @@
 import admins from "../models/superadmin.js";
 import authHelper from "../helpers/auth.js";
 import jwt from "jsonwebtoken";
-import { sendAdminCredentials } from "../helpers/emailService.js";
+import { sendAdminCredentials, sendOTP } from "../helpers/emailService.js";
 import OTPVerification from "../models/otpScehma.js";
+import OtpVerification from "../models/otpScehma.js";
 
 const { hashPassword, comparePassword } = authHelper;
 
@@ -220,33 +221,96 @@ export const getadminDetails = async (req, res) => {
 };
 
 
-export const updatePassword = async(req,res)=>{
-    try {
-      const {email,password,confirmpassword}=req.body
+export const Otpsend = async(req,res)=>{
+  try {
+    const {email}=req.body
+    if(!email) return res.status(400).json({error:"email is required"})
 
-      if(!email) return res.status(400).json({error:"email is required"})
-      if(!password) return res.status(400).json({error:"Enter a password"})
-        if (password.length < 6) {
-          return res.status(400).json({ error: "Password must be at least 6 characters long" });
-      }
-     if(!confirmpassword) return res.status(400).json({error:"Enter confrim password"})
-      
-      if(password !== confirmpassword) return res.status(400).json({error:"Passwords do not match"})
-
-        const admin = await admins.findOne({email });
-        if (!admin) {
-          return res.status(404).json({ error: "this email is not registred" });
-      }
-         
-        const hashedPassword = await hashPassword(password);
-
-        admin.password = hashedPassword;
-        await admin.save();
-
-        res.status(200).json({ message: "Password updated successfully" });
-
-    } catch (error) {
-      console.error("Error updating password:", error);
-      res.status(500).json({ error: "Internal server error" });
+      const admin = await admins.findOne({email });
+      if (!admin) {
+        return res.status(404).json({ error: "this email is not registred" });
     }
+    const otpsend = await OtpVerification.findOne({email,userType:'admin'})
+    if(otpsend){
+      await OTPVerification.deleteOne({ email });
+    }
+    await sendOTP(email);
+    res.status(200).json({ message: "otp sended" });
+
+  } catch (error) {
+    console.error("Error send otp :", error);
+      res.status(500).json({ error });
+  }
 }
+
+
+export const CheckingOtp=async(req,res)=>{
+  try {
+    const {email,otp}=req.body
+
+    if (!email) return res.status(400).json({ error: "Email is required" });
+    if (!otp) return res.status(400).json({ error: "OTP is required" });
+
+    const otpRecord = await OTPVerification.findOne({ email,userType:'admin' });
+    console.log(otpRecord);
+
+    if (!otpRecord || otpRecord.expiresAt < new Date()) {
+      return res.status(400).json({ error: "OTP expired. Request a new one." });
+    }
+
+    if (otpRecord.otp !== otp)
+      return res.status(400).json({ error: "Invalid OTP" });
+
+    const updatedOtp = await OtpVerification.findOneAndUpdate(
+      { email }, 
+      { otpisverfied: true }, 
+      { new: true } 
+    );
+    res.status(200).json({ message: " OTP verified successfully" });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error verifying OTP." });
+    console.log(error);
+  }
+} 
+
+export const updatePassword = async (req, res) => {
+  try {
+    const { email, password, confirmPassword } = req.body;
+
+    if (!email) return res.status(400).json({ error: "Email is required" });
+    if (!password) return res.status(400).json({ error: "Enter a password" });
+    if (password.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters long" });
+    }
+    if (!confirmPassword) return res.status(400).json({ error: "Enter confirm password" });
+    if (password !== confirmPassword) return res.status(400).json({ error: "Passwords do not match" });
+
+    const admin = await admins.findOne({ email });
+    if (!admin) {
+      return res.status(404).json({ error: "This email is not registered" });
+    }
+
+    const otpchecking = await OtpVerification.findOne({ email, otpisverfied: true });
+
+    if (!otpchecking) {
+      return res.status(400).json({ error: "OTP  verification not completed" });
+    }
+
+    const hashedPassword = await hashPassword(password);
+
+    admin.password = hashedPassword;
+    await admin.save();
+
+    await OtpVerification.deleteOne({ email });
+
+    return res.status(200).json({ message: "Password updated successfully" });
+
+  } catch (error) {
+    console.error("Error updating password:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
+
