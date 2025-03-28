@@ -64,7 +64,7 @@ function App() {
 
   return (
     <>
-          <Toaster position="top-right" reverseOrder={false} />
+          <Toaster position="top-left" reverseOrder={false} />
     <Router>
       <Routes>
         {/* Public Route */}
