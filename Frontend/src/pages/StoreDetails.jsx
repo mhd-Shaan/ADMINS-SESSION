@@ -20,6 +20,7 @@ const StoreDetails = () => {
   if (!store || !store.storeDetails) {
     return <p className="text-center text-red-600">No store details available.</p>;
   }
+console.log(store);
 
   const { storeDetails } = store;
   const { pickupDetails, pdfUrls } = storeDetails;

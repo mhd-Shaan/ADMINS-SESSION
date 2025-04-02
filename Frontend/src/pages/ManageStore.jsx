@@ -84,6 +84,7 @@ function ManageStore() {
       );
       setApprovedStores(approvedResponse.data.StoreDetails || []);
       
+      
       setTotalPages(approvedResponse.data.totalPages)
 
     } catch (error) {
@@ -251,16 +252,8 @@ function ManageStore() {
                 (activeTab === "pending" ? stores : approvedStores).map(
                   (store, index) => (
                     <TableRow key={store._id}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell>
-                        <Link
-                          to="/home/manage-store/manageproducts"
-                          state={{ store }}
-                          className="text-blue-600 hover:underline"
-                        >
-                          {store.shopName}
-                        </Link>
-                      </TableCell>
+                      <TableCell>{index + 1}</TableCell>                        
+                      <TableCell>{store.pickupDetails?.shopName || "N/A"}</TableCell>
                       <TableCell>{store.email}</TableCell>
                       <TableCell>
                         {activeTab === "approved" ? (
