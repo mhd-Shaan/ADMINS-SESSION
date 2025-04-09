@@ -2,8 +2,9 @@ import express from 'express';
 import { registeradmins, loginadmins, getadmins, blockandunblockadmin, Editadmin, getadminDetails, updatePassword, Otpsend, CheckingOtp } from '../controllers/authController.js';
 import authHelper from '../helpers/auth.js'
 import { GetStores, GetStorespending, storeApproval, storeRejecting, storesblockandunblock } from '../controllers/StoreController.js';
-import { GetUsers, userblockandunblock } from '../controllers/userController.js';
+import { AddBrand, AddCatgorey, brandsblockandunblock, categoryblockandunblock, GetUsers, userblockandunblock, viewBrands, viewCategory } from '../controllers/userController.js';
 import OtpVerification from '../models/otpScehma.js';
+import { upload, uploding } from '../config/multer.js';
 
 
 const {authenticate}=authHelper
@@ -29,4 +30,13 @@ router.put('/store-approval/:id',authenticate,storeApproval)
 
 router.put('/user-block-unblock/:id',authenticate,userblockandunblock)
 router.get('/getallusers',authenticate,GetUsers)
+router.post("/add-category",authenticate, upload.single("image"), AddCatgorey);
+router.post("/add-brand",authenticate, uploding.single("image"), AddBrand);
+router.get('/view-category',authenticate,viewCategory)
+router.get('/view-brands',authenticate,viewBrands)
+router.put('/category-status/:id',authenticate,categoryblockandunblock)
+router.put('/brand-status/:id',authenticate,brandsblockandunblock)
+
+
+
 export default router;

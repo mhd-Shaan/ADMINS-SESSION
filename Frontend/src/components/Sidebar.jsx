@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Store, Star, Megaphone, Users, Menu,User } from "lucide-react";
+import { LayoutDashboard, Store, Star, Megaphone, Users, Menu,User,Boxes } from "lucide-react";
 import { useSelector } from "react-redux";
 import React from "react";
 
@@ -20,6 +20,7 @@ if (admin === undefined || admin === null) {
     { name: "Dashboard", icon: LayoutDashboard, path: "/home" },
     { name: "Manage Users", icon: User, path: "/home/manage-users" }, 
     { name: "Manage Store", icon: Store, path: "/home/manage-store" },
+    { name: "Category", icon: Boxes, path: "/home/manage-category" },
     { name: "Reviews", icon: Star, path: "/home/manage-reviews" },
     { name: "Advertisement", icon: Megaphone, path: "/home/manage-advertisement" },
     ...(admin.role === "superadmin"
