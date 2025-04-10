@@ -8,6 +8,14 @@ import {
 } from "@heroicons/react/24/outline";
 import axios from "axios";
 import toast from "react-hot-toast";
+import {
+  IconButton,
+  InputAdornment,
+  TextField,
+  MenuItem,
+  Pagination,
+} from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 
 function Category() {
   const [activeTab, setActiveTab] = useState("category");
@@ -15,6 +23,12 @@ function Category() {
   const [name, setName] = useState("");
   const [image, setImage] = useState(null);
   const [items, setItems] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
+
   const token = localStorage.getItem("token");
 
   const openModal = () => {
@@ -34,11 +48,18 @@ function Category() {
 
       const response = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
+        params: {
+          page: currentPage,
+          limit: itemsPerPage,
+          search: searchQuery,
+          status: filterStatus,
+        },
       });
 
-      setItems(activeTab === "category" ? response.data.category : response.data.brands);
-      console.log(response.data);
-      
+      const data =
+        activeTab === "category" ? response.data.category : response.data.brands;
+      setItems(data);
+      setTotalPages(response.data.totalPages || 1);
     } catch (error) {
       toast.error("Failed to fetch data");
     }
@@ -46,7 +67,7 @@ function Category() {
 
   useEffect(() => {
     fetchItems();
-  }, [activeTab]);
+  }, [activeTab, currentPage, searchQuery, filterStatus]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -75,7 +96,7 @@ function Category() {
     }
   };
 
-  const handleBlockUnblock = async (id, status) => {
+  const handleBlockUnblock = async (id, isBlocked) => {
     try {
       const endpoint =
         activeTab === "category"
@@ -84,15 +105,13 @@ function Category() {
 
       await axios.put(
         endpoint,
-        { status: status === "active" ? "blocked" : "active" },
+        { isBlocked: !isBlocked },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       toast.success("Status updated");
       fetchItems();
     } catch (error) {
-      console.log(error);
-      
       toast.error("Failed to update status");
     }
   };
@@ -115,19 +134,64 @@ function Category() {
     }
   };
 
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleFilterChange = (e) => {
+    setFilterStatus(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (_, value) => {
+    setCurrentPage(value);
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">
-          {activeTab === "category" ? "Manage Categories" : "Manage Brands"}
-        </h1>
-        <button
-          onClick={openModal}
-          className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition"
-        >
-          + Add {activeTab === "category" ? "Category" : "Brand"}
-        </button>
+      <div className="flex flex-col md:flex-row gap-4 items-stretch mb-6 w-full">
+        <div className="w-full md:w-[45%]">
+          <TextField
+            label="Search"
+            variant="outlined"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton>
+                    <SearchIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            fullWidth
+          />
+        </div>
+        <div className="w-full md:w-[25%]">
+          <TextField
+            select
+            label="Filter"
+            value={filterStatus}
+            onChange={handleFilterChange}
+            variant="outlined"
+            fullWidth
+          >
+            <MenuItem value="all">Show All</MenuItem>
+            <MenuItem value="blocked">Blocked</MenuItem>
+            <MenuItem value="unblocked">Unblocked</MenuItem>
+          </TextField>
+        </div>
+        <div className="w-full md:w-[25%]">
+          <button
+            onClick={openModal}
+            className="bg-blue-600 w-full text-white px-6 py-3 rounded shadow hover:bg-blue-700 transition"
+          >
+            + Add {activeTab === "category" ? "Category" : "Brand"}
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -138,7 +202,10 @@ function Category() {
               ? "border-b-2 border-blue-600 text-blue-600"
               : "text-gray-500"
           }`}
-          onClick={() => setActiveTab("category")}
+          onClick={() => {
+            setActiveTab("category");
+            setCurrentPage(1);
+          }}
         >
           Categories
         </button>
@@ -148,7 +215,10 @@ function Category() {
               ? "border-b-2 border-blue-600 text-blue-600"
               : "text-gray-500"
           }`}
-          onClick={() => setActiveTab("brand")}
+          onClick={() => {
+            setActiveTab("brand");
+            setCurrentPage(1);
+          }}
         >
           Brands
         </button>
@@ -204,8 +274,8 @@ function Category() {
       </Dialog>
 
       {/* Table */}
-      <div className="mt-6 overflow-auto max-h-[600px]">
-        <table className="min-w-full bg-white shadow-lg rounded-xl overflow-hidden">
+      <div className="overflow-auto max-h-[65vh]">
+        <table className="min-w-full bg-white shadow-md rounded-xl">
           <thead className="bg-blue-50 text-gray-700 text-sm font-semibold">
             <tr>
               <th className="py-3 px-6 text-left">Image</th>
@@ -215,10 +285,6 @@ function Category() {
             </tr>
           </thead>
           <tbody className="text-sm text-gray-600 divide-y">
-
-
-{console.log(items)
-}
             {items.map((item) => (
               <tr key={item._id} className="hover:bg-gray-50 transition">
                 <td className="py-3 px-6">
@@ -232,30 +298,32 @@ function Category() {
                 <td className="py-3 px-6">
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      item.isBlocked === true
+                      item.isBlocked
                         ? "bg-red-100 text-red-600"
                         : "bg-green-100 text-green-700"
                     }`}
                   >
-{item.isBlocked === true ? "Blocked" : "Active"}
-</span>
+                    {item.isBlocked ? "Blocked" : "Active"}
+                  </span>
                 </td>
                 <td className="py-3 px-6 text-center">
                   <Menu as="div" className="relative inline-block text-left">
                     <Menu.Button className="p-2 hover:bg-gray-100 rounded-full transition">
                       <EllipsisVerticalIcon className="w-5 h-5 text-gray-600" />
                     </Menu.Button>
-                    <Menu.Items className="absolute right-0 top-0 translate-y-10 w-44 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none z-50">
+                    <Menu.Items className="absolute right-0 mt-2 w-44 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none z-50">
                       <div className="p-1">
                         <Menu.Item>
                           {({ active }) => (
                             <button
-                              onClick={() => handleBlockUnblock(item._id, item.status)}
+                              onClick={() =>
+                                handleBlockUnblock(item._id, item.isBlocked)
+                              }
                               className={`${
                                 active ? "bg-gray-100" : ""
-                              } flex items-center w-full px-3 py-2 text-sm text-gray-700 rounded whitespace-nowrap`}
+                              } flex items-center w-full px-3 py-2 text-sm text-gray-700 rounded`}
                             >
-                              {item.status === "blocked" ? (
+                              {item.isBlocked ? (
                                 <>
                                   <LockOpenIcon className="w-4 h-4 mr-2" />
                                   Unblock
@@ -275,7 +343,7 @@ function Category() {
                               onClick={() => handleDelete(item._id)}
                               className={`${
                                 active ? "bg-red-50" : ""
-                              } flex items-center w-full px-3 py-2 text-sm text-red-600 rounded whitespace-nowrap`}
+                              } flex items-center w-full px-3 py-2 text-sm text-red-600 rounded`}
                             >
                               <TrashIcon className="w-4 h-4 mr-2" />
                               Delete
@@ -297,6 +365,16 @@ function Category() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="mt-4 flex justify-center">
+        <Pagination
+          count={totalPages}
+          page={currentPage}
+          onChange={handlePageChange}
+          color="primary"
+        />
       </div>
     </div>
   );

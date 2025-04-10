@@ -1,3 +1,4 @@
+import { error } from "console";
 import Brands from "../models/BrandSchema.js";
 import Category from "../models/CatgoerySchema.js";
 import Users from "../models/userSchema.js";
@@ -122,19 +123,72 @@ export const AddBrand = async (req, res) => {
 // View all brands
 export const viewBrands = async (req, res) => {
   try {
-    const brands = await Brands.find();
-    return res.status(200).json({ brands });
+    const { page = 1, limit = 10, search = '', status = 'all' } = req.query;
+
+    const skip = (page - 1) * Number(limit); 
+
+    const searchFilter = {
+      $or: [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ],
+    };
+
+    if (status === "blocked") {
+      searchFilter.isBlocked = true;
+    } else if (status === "unblocked") {
+      searchFilter.isBlocked = false;
+    }
+
+    const totalBrands = await Brands.countDocuments(searchFilter);
+
+    const brands = await Brands.find(searchFilter)
+      .skip(skip)
+      .limit(Number(limit));
+
+    return res.status(200).json({
+      totalBrands,
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalBrands / Number(limit)),
+      brands,
+    });
   } catch (error) {
     console.error("Error fetching brands:", error);
     return res.status(500).json({ error: "Error fetching brands" });
   }
 };
 
+
 // View all categories
 export const viewCategory = async (req, res) => {
   try {
-    const category = await Category.find();
-    return res.status(200).json({ category });
+
+    const { page = 1, limit = 10, search = '', status = 'all' } = req.query;
+
+    const skip = (page - 1) * Number(limit); 
+
+    const searchFilter = {
+      $or: [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ],
+    };
+
+    if (status === "blocked") {
+      searchFilter.isBlocked = true;
+    } else if (status === "unblocked") {
+      searchFilter.isBlocked = false;
+    }
+    const totalCategory = await Brands.countDocuments(searchFilter);
+
+
+    const category = await Category.find(searchFilter).skip(skip).limit(Number(limit))
+    return res.status(200).json({
+      totalCategory,
+      currentPage:Number(page),
+      totalPages:Math.ceil(totalCategory/Number(limit)),
+       category 
+      });
   } catch (error) {
     console.error("Error fetching categories:", error);
     return res.status(500).json({ error: "Error fetching categories" });
@@ -158,7 +212,7 @@ export const categoryblockandunblock = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `store ${
+      message: `catgory ${
         category.isBlocked ? "Blocked" : "Unblocked"
       } successfully`,
       category,
@@ -184,13 +238,59 @@ export const brandsblockandunblock = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `store ${
+      message: `brand ${
         brand.isBlocked ? "Blocked" : "Unblocked"
       } successfully`,
       brand,
     });
   } catch (error) {
     console.error("Error in brandsblockandunblock:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const deleteCategory = async (req, res) => {
+  try {
+    const categoryId = req.params.id;
+    const category = await Category.findByIdAndDelete(categoryId);
+
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: "Category not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Category deleted successfully",
+      category,
+    });
+  } catch (error) {
+    console.error("Error in deleteCategory:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const deleteBrand = async (req, res) => {
+  try {
+    const BrandId = req.params.id;
+    const Brand = await Brands.findByIdAndDelete(BrandId);
+
+    if (!Brand) {
+      return res.status(404).json({
+        success: false,
+        error: "Brand not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Brand deleted successfully",
+      Brand,
+    });
+  } catch (error) {
+    console.error("Error in deletebrand:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
