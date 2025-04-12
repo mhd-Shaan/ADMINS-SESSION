@@ -12,6 +12,10 @@ const brandSchema = new mongoose.Schema(
       type: String,
       required: [true, "Category image is required"],
     },
+    type:{
+      type:String,
+      required:true,
+    },
     isBlocked: {
       type: Boolean,
       default: false,

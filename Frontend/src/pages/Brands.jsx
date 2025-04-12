@@ -17,15 +17,17 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
-function CategoryComponent() {
+function BrandComponent() {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
+  const [type, setType] = useState("OEM");
   const [image, setImage] = useState(null);
-  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [activeTypeTab, setActiveTypeTab] = useState("all");
   const itemsPerPage = 10;
 
   const token = localStorage.getItem("token");
@@ -34,84 +36,83 @@ function CategoryComponent() {
     setIsOpen(true);
     setName("");
     setImage(null);
+    setType("OEM");
   };
 
   const closeModal = () => setIsOpen(false);
 
-  const fetchCategories = async () => {
+  const fetchBrands = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/view-category", {
+      const response = await axios.get("http://localhost:5000/view-brands", {
         headers: { Authorization: `Bearer ${token}` },
         params: {
           page: currentPage,
           limit: itemsPerPage,
           search: searchQuery,
           status: filterStatus,
+          type: activeTypeTab === "all" ? undefined : activeTypeTab,
         },
       });
 
-      setCategories(response.data.category);
-      
+      setBrands(response.data.brands);
       setTotalPages(response.data.totalPages || 1);
+      console.log(response.data);
+      
     } catch (error) {
-      toast.error("Failed to fetch categories");
+      toast.error("Failed to fetch brands");
     }
   };
 
   useEffect(() => {
-    fetchCategories();
-  }, [currentPage, searchQuery, filterStatus]);
+    fetchBrands();
+  }, [currentPage, searchQuery, filterStatus, activeTypeTab]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
     formData.append("name", name);
     formData.append("image", image);
+    formData.append("type", type);
 
     try {
-      await axios.post("http://localhost:5000/add-category", formData, {
+      await axios.post("http://localhost:5000/add-brand", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
       });
 
-      toast.success("Category added successfully");
+      toast.success("Brand added successfully");
       closeModal();
-      fetchCategories();
+      fetchBrands();
     } catch (error) {
       toast.error(error.response?.data?.error || "Submission failed");
     }
   };
 
-  const handleBlockUnblock = async (id) => {
+  const handleBlockUnblock = async (id, isBlocked) => {
     try {
       await axios.put(
         `http://localhost:5000/brand-status/${id}`,
-        {}, 
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-  
+
       toast.success("Status updated");
       fetchBrands();
     } catch (error) {
       toast.error("Failed to update status");
     }
   };
-  
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/delete-category/${id}`, {
+      await axios.delete(`http://localhost:5000/delete-brand/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      toast.success("Category deleted successfully");
-      fetchCategories();
+      toast.success("Brand deleted successfully");
+      fetchBrands();
     } catch (error) {
       toast.error("Delete failed");
     }
@@ -137,7 +138,7 @@ function CategoryComponent() {
       <div className="flex flex-col md:flex-row gap-4 items-stretch mb-6 w-full">
         <div className="w-full md:w-[45%]">
           <TextField
-            label="Search Categories"
+            label="Search Brands"
             variant="outlined"
             value={searchQuery}
             onChange={handleSearchChange}
@@ -172,9 +173,52 @@ function CategoryComponent() {
             onClick={openModal}
             className="bg-blue-600 w-full text-white px-6 py-3 rounded shadow hover:bg-blue-700 transition"
           >
-            + Add Category
+            + Add Brand
           </button>
         </div>
+      </div>
+
+      {/* Type Tabs */}
+      <div className="flex border-b mb-6 space-x-4">
+        <button
+          className={`px-4 py-2 font-semibold ${
+            activeTypeTab === "all"
+              ? "border-b-2 border-blue-600 text-blue-600"
+              : "text-gray-500"
+          }`}
+          onClick={() => {
+            setActiveTypeTab("all");
+            setCurrentPage(1);
+          }}
+        >
+          All Brands
+        </button>
+        <button
+          className={`px-4 py-2 font-semibold ${
+            activeTypeTab === "OEM"
+              ? "border-b-2 border-blue-600 text-blue-600"
+              : "text-gray-500"
+          }`}
+          onClick={() => {
+            setActiveTypeTab("OEM");
+            setCurrentPage(1);
+          }}
+        >
+          OEM
+        </button>
+        <button
+          className={`px-4 py-2 font-semibold ${
+            activeTypeTab === "OES"
+              ? "border-b-2 border-blue-600 text-blue-600"
+              : "text-gray-500"
+          }`}
+          onClick={() => {
+            setActiveTypeTab("OES");
+            setCurrentPage(1);
+          }}
+        >
+          OES
+        </button>
       </div>
 
       {/* Modal */}
@@ -183,7 +227,7 @@ function CategoryComponent() {
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="bg-white w-full max-w-md p-6 rounded-lg shadow-lg">
             <Dialog.Title className="text-xl font-bold mb-4">
-              Add Category
+              Add Brand
             </Dialog.Title>
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
@@ -195,6 +239,19 @@ function CategoryComponent() {
                   required
                   className="w-full px-3 py-2 border rounded"
                 />
+              </div>
+
+              <div className="mb-4">
+                <label className="block font-semibold mb-1">Type</label>
+                <select
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                  className="w-full px-3 py-2 border rounded"
+                  required
+                >
+                  <option value="OEM">OEM</option>
+                  <option value="OES">OES</option>
+                </select>
               </div>
 
               <div className="mb-4">
@@ -235,30 +292,42 @@ function CategoryComponent() {
             <tr>
               <th className="py-3 px-6 text-left">Image</th>
               <th className="py-3 px-6 text-left">Name</th>
+              <th className="py-3 px-6 text-left">Type</th>
               <th className="py-3 px-6 text-left">Status</th>
               <th className="py-3 px-6 text-center">Action</th>
             </tr>
           </thead>
           <tbody className="text-sm text-gray-600 divide-y">
-            {categories.map((category) => (
-              <tr key={category._id} className="hover:bg-gray-50 transition">
+            {brands.map((brand) => (
+              <tr key={brand._id} className="hover:bg-gray-50 transition">
                 <td className="py-3 px-6">
                   <img
-                    src={category.image}
-                    alt={category.name}
+                    src={brand.image}
+                    alt={brand.name}
                     className="w-12 h-12 rounded object-cover shadow-sm"
                   />
                 </td>
-                <td className="py-3 px-6">{category.name}</td>
+                <td className="py-3 px-6">{brand.name}</td>
                 <td className="py-3 px-6">
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      category.isBlocked
+                      brand.type === "OEM"
+                        ? "bg-blue-100 text-blue-600"
+                        : "bg-purple-100 text-purple-600"
+                    }`}
+                  >
+                    {brand.type}
+                  </span>
+                </td>
+                <td className="py-3 px-6">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      brand.isBlocked
                         ? "bg-red-100 text-red-600"
                         : "bg-green-100 text-green-700"
                     }`}
                   >
-                    {category.isBlocked ? "Blocked" : "Active"}
+                    {brand.isBlocked ? "Blocked" : "Active"}
                   </span>
                 </td>
                 <td className="py-3 px-6 text-center">
@@ -272,13 +341,13 @@ function CategoryComponent() {
                           {({ active }) => (
                             <button
                               onClick={() =>
-                                handleBlockUnblock(category._id, category.isBlocked)
+                                handleBlockUnblock(brand._id, brand.isBlocked)
                               }
                               className={`${
                                 active ? "bg-gray-100" : ""
                               } flex items-center w-full px-3 py-2 text-sm text-gray-700 rounded`}
                             >
-                              {category.isBlocked ? (
+                              {brand.isBlocked ? (
                                 <>
                                   <LockOpenIcon className="w-4 h-4 mr-2" />
                                   Unblock
@@ -295,7 +364,7 @@ function CategoryComponent() {
                         <Menu.Item>
                           {({ active }) => (
                             <button
-                              onClick={() => handleDelete(category._id)}
+                              onClick={() => handleDelete(brand._id)}
                               className={`${
                                 active ? "bg-red-50" : ""
                               } flex items-center w-full px-3 py-2 text-sm text-red-600 rounded`}
@@ -311,10 +380,10 @@ function CategoryComponent() {
                 </td>
               </tr>
             ))}
-            {categories.length === 0 && (
+            {brands.length === 0 && (
               <tr>
-                <td colSpan="4" className="text-center py-6 text-gray-400">
-                  No categories found.
+                <td colSpan="5" className="text-center py-6 text-gray-400">
+                  No brands found.
                 </td>
               </tr>
             )}
@@ -335,4 +404,4 @@ function CategoryComponent() {
   );
 }
 
-export default CategoryComponent;
+export default BrandComponent;

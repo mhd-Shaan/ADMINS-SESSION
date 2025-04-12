@@ -1,34 +1,41 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Store, Star, Megaphone, Users, Menu,User,Boxes } from "lucide-react";
+import {
+  LayoutDashboard,
+  Store,
+  Users,
+  Tag,
+  BadgePercent,
+  Star,
+  Megaphone,
+  Menu,
+  UserCog,
+  Boxes,
+} from "lucide-react";
 import { useSelector } from "react-redux";
 import React from "react";
-
-
 
 const Sidebar = () => {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-   const admin = useSelector((state) => state.admin.admin); // Ensure correct Redux state
-// console.log(state.admin.admin);
+  const admin = useSelector((state) => state.admin.admin);
 
-if (admin === undefined || admin === null) {
-  return <p>Loading...</p>; // Prevents errors
-}
+  if (admin === undefined || admin === null) {
+    return <p>Loading...</p>;
+  }
+
   const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard, path: "/home" },
-    { name: "Manage Users", icon: User, path: "/home/manage-users" }, 
+    { name: "Manage Users", icon: Users, path: "/home/manage-users" },
     { name: "Manage Store", icon: Store, path: "/home/manage-store" },
     { name: "Category", icon: Boxes, path: "/home/manage-category" },
+    { name: "Brands", icon: Tag, path: "/home/manage-brands" },
     { name: "Reviews", icon: Star, path: "/home/manage-reviews" },
     { name: "Advertisement", icon: Megaphone, path: "/home/manage-advertisement" },
     ...(admin.role === "superadmin"
-      ? [{ name: "Manage Admin", icon: Users, path: "/home/manage-admins" }]
+      ? [{ name: "Manage Admin", icon: UserCog, path: "/home/manage-admins" }]
       : []),
-
-
-  
   ];
 
   return (
@@ -61,7 +68,9 @@ if (admin === undefined || admin === null) {
               <NavLink
                 to={item.path}
                 className={`flex items-center px-4 py-2 rounded-lg transition-all duration-300 ${
-                  isActive ? "bg-blue-500 text-white" : "text-gray-700 hover:bg-blue-100 hover:text-blue-500"
+                  isActive
+                    ? "bg-blue-500 text-white"
+                    : "text-gray-700 hover:bg-blue-100 hover:text-blue-500"
                 }`}
               >
                 <item.icon className="w-5 h-5" />

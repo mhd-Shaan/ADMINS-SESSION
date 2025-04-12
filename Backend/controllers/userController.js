@@ -2,6 +2,7 @@ import { error } from "console";
 import Brands from "../models/BrandSchema.js";
 import Category from "../models/CatgoerySchema.js";
 import Users from "../models/userSchema.js";
+import { type } from "os";
 
 export const userblockandunblock = async (req, res) => {
   try {
@@ -95,10 +96,11 @@ export const AddCatgorey = async (req, res) => {
 
 export const AddBrand = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name,type } = req.body;
 
     if (!name) return res.status(400).json({ error: "Name is required" });
 
+    if(!type) return res.status(400).json({error:"type is required"})
     if (!req.file) {
       return res.status(400).json({ error: "No image uploaded" });
     }
@@ -107,6 +109,7 @@ export const AddBrand = async (req, res) => {
 
     const brand = await Brands.create({
       name,
+      type,
       image: imageUrl,
     });
 
@@ -123,7 +126,7 @@ export const AddBrand = async (req, res) => {
 // View all brands
 export const viewBrands = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = '', status = 'all' } = req.query;
+    const { page = 1, limit = 10, search = '', status = 'all',type='' } = req.query;
 
     const skip = (page - 1) * Number(limit); 
 
@@ -138,6 +141,10 @@ export const viewBrands = async (req, res) => {
       searchFilter.isBlocked = true;
     } else if (status === "unblocked") {
       searchFilter.isBlocked = false;
+    }
+
+    if (type === 'OES' || type === 'OEM') {
+      searchFilter.type = type;
     }
 
     const totalBrands = await Brands.countDocuments(searchFilter);
@@ -163,7 +170,7 @@ export const viewBrands = async (req, res) => {
 export const viewCategory = async (req, res) => {
   try {
 
-    const { page = 1, limit = 10, search = '', status = 'all' } = req.query;
+    const { page = 1, limit = 10, search = '', status = 'all'} = req.query;
 
     const skip = (page - 1) * Number(limit); 
 
@@ -179,7 +186,10 @@ export const viewCategory = async (req, res) => {
     } else if (status === "unblocked") {
       searchFilter.isBlocked = false;
     }
-    const totalCategory = await Brands.countDocuments(searchFilter);
+
+   
+    
+    const totalCategory = await Category.countDocuments(searchFilter);
 
 
     const category = await Category.find(searchFilter).skip(skip).limit(Number(limit))
@@ -198,7 +208,6 @@ export const viewCategory = async (req, res) => {
 export const categoryblockandunblock = async (req, res) => {
   try {
     const categoryid = req.params.id;
-    console.log(categoryid);
     
 
     const category = await Category.findById(categoryid);
@@ -244,7 +253,7 @@ export const brandsblockandunblock = async (req, res) => {
       brand,
     });
   } catch (error) {
-    console.error("Error in brandsblockandunblock:", error);
+    console.log("Error in brandsblockandunblock:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

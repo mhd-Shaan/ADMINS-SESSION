@@ -24,6 +24,7 @@ import ProfileDetails from "./components/ProfileDetails";
 import EditPassword from "./pages/EditPassword";
 import StoreDetails from "./pages/StoreDetails";
 import Category from "./pages/Category";
+import Brands from "./pages/Brands";
 
 function App() {
   const [admins, setAdmin] = useState(null); // Initialize as null
@@ -87,6 +88,7 @@ function App() {
           <Route path="manage-advertisement" element={<Advertiment />} />
           <Route path="manage-reviews" element={<Reviews />} />
           <Route path="manage-category" element={<Category />} />
+          <Route path="manage-brands" element={<Brands />} />
           <Route
             path="manage-admins"
             element={
