@@ -303,3 +303,184 @@ export const deleteBrand = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+
+export const AddsubBrand = async (req, res) => {
+  try {
+    const { name,type } = req.body;
+    const BrandId = req.params.id;
+
+    if (!name) return res.status(400).json({ error: "Name is required" });
+
+    if(!type) return res.status(400).json({error:"type is required"})
+    if (!req.file) {
+      return res.status(400).json({ error: "No image uploaded" });
+    }
+
+    const imageUrl = req.file.path;
+
+    const brand = await Brands.create({
+      BrandId,
+      name,
+      type,
+      image: imageUrl,
+    });
+
+    return res.status(201).json({
+      message: "subBrand added successfully",
+      brand,
+    });
+  } catch (error) {
+    console.error("Error adding sub brand:", error);
+    return res.status(500).json({ error });
+  }
+};
+
+
+export const AddsubCategory = async (req, res) => {
+  try {
+    const { name,type } = req.body;
+    const CategoryId = req.params.id;
+
+    if (!name) return res.status(400).json({ error: "Name is required" });
+
+    if(!type) return res.status(400).json({error:"type is required"})
+    if (!req.file) {
+      return res.status(400).json({ error: "No image uploaded" });
+    }
+
+    const imageUrl = req.file.path;
+
+    const brand = await Brands.create({
+      CategoryId,
+      name,
+      type,
+      image: imageUrl,
+    });
+
+    return res.status(201).json({
+      message: "subCategory added successfully",
+      brand,
+    });
+  } catch (error) {
+    console.error("Error adding sub Category:", error);
+    return res.status(500).json({ error });
+  }
+};
+
+
+export const deletesubCategory = async (req, res) => {
+  try {
+    const subcategoryId = req.params.id;
+    const subcategory = await Category.findByIdAndDelete(subcategoryId);
+
+    if (!subcategory) {
+      return res.status(404).json({
+        success: false,
+        message: "Category not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "subCategory deleted successfully",
+      subcategory,
+    });
+  } catch (error) {
+    console.error("Error in deletesubCategory:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+
+export const deletesuBrand = async (req, res) => {
+  try {
+    const subBrandId = req.params.id;
+    const SubBrand = await Category.findByIdAndDelete(subBrandId);
+
+    if (!SubBrand) {
+      return res.status(404).json({
+        success: false,
+        message: "Category not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "subBrand deleted successfully",
+      SubBrand,
+    });
+  } catch (error) {
+    console.error("Error in deletesubBrand:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+
+
+export const EditSubBrand = async (req, res) => {
+  try {
+    const subBrandId = req.params.id;
+    const { name } = req.body;
+
+    if (!name) return res.status(400).json({ error: "Name is required" });
+    if (!req.file) return res.status(400).json({ error: "No image uploaded" });
+
+    // Find sub-brand in database
+    const subBrand = await SubBrandModel.findById(subBrandId); // Use your actual model here
+    if (!subBrand) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Sub-brand not found" });
+    }
+
+    // Update values
+    subBrand.name = name;
+    subBrand.image = req.file.path; // Cloudinary URL
+
+    await subBrand.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Sub-brand updated successfully",
+      subBrand,
+    });
+  } catch (error) {
+    console.error("Error updating SubBrand:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+
+export const EditSubCategory = async (req, res) => {
+  try {
+    const subCategoryId = req.params.id;
+    const { name } = req.body;
+
+    if (!name) return res.status(400).json({ error: "Name is required" });
+    if (!req.file) return res.status(400).json({ error: "No image uploaded" });
+
+    // Find sub-brand in database
+    const subCategory = await SubBrandModel.findById(subCategoryId); // Use your actual model here
+    if (!subCategory) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Sub-brand not found" });
+    }
+
+    // Update values
+    subCategory.name = name;
+    subCategory.image = req.file.path 
+
+    await subCategory.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Sub-brand updated successfully",
+      subBrand,
+    });
+  } catch (error) {
+    console.error("Error updating SubBrand:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
