@@ -4,13 +4,13 @@ const brandSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "Category name is required"],
+      required: [true, "Brand name is required"],
       unique: true,
       trim: true,
     },
     image: {
       type: String,
-      required: [true, "Category image is required"],
+      required: [true, "Brand image is required"],
     },
     type:{
       type:String,

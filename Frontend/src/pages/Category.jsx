@@ -16,6 +16,7 @@ import {
   Pagination,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import { useNavigate } from "react-router-dom"; // Added for navigation
 
 function CategoryComponent() {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,8 +28,9 @@ function CategoryComponent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
-
   const token = localStorage.getItem("token");
+
+  const navigate = useNavigate(); // Used for routing to subcategory page
 
   const openModal = () => {
     setIsOpen(true);
@@ -49,9 +51,7 @@ function CategoryComponent() {
           status: filterStatus,
         },
       });
-
       setCategories(response.data.category);
-      
       setTotalPages(response.data.totalPages || 1);
     } catch (error) {
       toast.error("Failed to fetch categories");
@@ -87,29 +87,26 @@ function CategoryComponent() {
   const handleBlockUnblock = async (id) => {
     try {
       await axios.put(
-        `http://localhost:5000/brand-status/${id}`,
-        {}, 
+        `http://localhost:5000/category-status/${id}`, // Ensure the correct route
+        {},
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-  
       toast.success("Status updated");
-      fetchBrands();
+      fetchCategories();
     } catch (error) {
       toast.error("Failed to update status");
     }
   };
-  
 
   const handleDelete = async (id) => {
     try {
       await axios.delete(`http://localhost:5000/delete-category/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       toast.success("Category deleted successfully");
       fetchCategories();
     } catch (error) {
@@ -266,13 +263,30 @@ function CategoryComponent() {
                     <Menu.Button className="p-2 hover:bg-gray-100 rounded-full transition">
                       <EllipsisVerticalIcon className="w-5 h-5 text-gray-600" />
                     </Menu.Button>
-                    <Menu.Items className="absolute right-0 mt-2 w-44 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none z-50">
+                    <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none z-50">
                       <div className="p-1">
+                        {/* View SubCategories */}
                         <Menu.Item>
                           {({ active }) => (
                             <button
                               onClick={() =>
-                                handleBlockUnblock(category._id, category.isBlocked)
+                                navigate(`/home/subcategories/${category._id}`)
+                              }
+                              className={`${
+                                active ? "bg-gray-100" : ""
+                              } flex items-center w-full px-3 py-2 text-sm text-blue-600 rounded`}
+                            >
+                              📂 View SubCategories
+                            </button>
+                          )}
+                        </Menu.Item>
+
+                        {/* Block/Unblock */}
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={() =>
+                                handleBlockUnblock(category._id)
                               }
                               className={`${
                                 active ? "bg-gray-100" : ""
@@ -292,6 +306,8 @@ function CategoryComponent() {
                             </button>
                           )}
                         </Menu.Item>
+
+                        {/* Delete */}
                         <Menu.Item>
                           {({ active }) => (
                             <button

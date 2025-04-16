@@ -56,7 +56,7 @@ function BrandComponent() {
 
       setBrands(response.data.brands);
       setTotalPages(response.data.totalPages || 1);
-      console.log(response.data);
+      (response.data);
       
     } catch (error) {
       toast.error("Failed to fetch brands");

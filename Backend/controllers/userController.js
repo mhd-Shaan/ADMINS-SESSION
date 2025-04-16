@@ -1,8 +1,12 @@
-import { error } from "console";
+import { error, log } from "console";
 import Brands from "../models/BrandSchema.js";
 import Category from "../models/CatgoerySchema.js";
 import Users from "../models/userSchema.js";
 import { type } from "os";
+import SubBrands from "../models/SubBrandSchema.js";
+import SubCategory from "../models/SubCatgoerySchema.js";
+import mongoose from 'mongoose';
+
 
 export const userblockandunblock = async (req, res) => {
   try {
@@ -35,7 +39,6 @@ export const GetUsers = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = "", status = "all" } = req.query; // Default values: page 1, 10 users per page
     const skip = (page - 1) * limit;
-    console.log(status);
 
     const searchFilter = {
       $or: [
@@ -169,41 +172,45 @@ export const viewBrands = async (req, res) => {
 // View all categories
 export const viewCategory = async (req, res) => {
   try {
-
-    const { page = 1, limit = 10, search = '', status = 'all'} = req.query;
-
-    const skip = (page - 1) * Number(limit); 
+    const { page = 1, limit, search = '', status = 'all' } = req.query;
 
     const searchFilter = {
       $or: [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
       ],
     };
 
-    if (status === "blocked") {
+    if (status === 'blocked') {
       searchFilter.isBlocked = true;
-    } else if (status === "unblocked") {
+    } else if (status === 'unblocked') {
       searchFilter.isBlocked = false;
     }
 
-   
-    
     const totalCategory = await Category.countDocuments(searchFilter);
 
+    let query = Category.find(searchFilter);
 
-    const category = await Category.find(searchFilter).skip(skip).limit(Number(limit))
+    // If limit is provided, apply pagination
+    if (limit) {
+      const skip = (page - 1) * Number(limit);
+      query = query.skip(skip).limit(Number(limit));
+    }
+
+    const category = await query;
+
     return res.status(200).json({
       totalCategory,
-      currentPage:Number(page),
-      totalPages:Math.ceil(totalCategory/Number(limit)),
-       category 
-      });
+      currentPage: Number(page),
+      totalPages: limit ? Math.ceil(totalCategory / Number(limit)) : 1,
+      category,
+    });
   } catch (error) {
-    console.error("Error fetching categories:", error);
-    return res.status(500).json({ error: "Error fetching categories" });
+    console.error('Error fetching categories:', error);
+    return res.status(500).json({ error: 'Error fetching categories' });
   }
 };
+
 
 export const categoryblockandunblock = async (req, res) => {
   try {
@@ -319,7 +326,7 @@ export const AddsubBrand = async (req, res) => {
 
     const imageUrl = req.file.path;
 
-    const brand = await Brands.create({
+    const brand = await SubBrands.create({
       BrandId,
       name,
       type,
@@ -339,24 +346,25 @@ export const AddsubBrand = async (req, res) => {
 
 export const AddsubCategory = async (req, res) => {
   try {
-    const { name,type } = req.body;
-    const CategoryId = req.params.id;
+    const { name,type,categoryId } = req.body;
+    
+    
 
     if (!name) return res.status(400).json({ error: "Name is required" });
 
-    if(!type) return res.status(400).json({error:"type is required"})
     if (!req.file) {
       return res.status(400).json({ error: "No image uploaded" });
     }
 
     const imageUrl = req.file.path;
 
-    const brand = await Brands.create({
-      CategoryId,
+    const brand = await SubCategory.create({
+      CategoryId: categoryId,
       name,
       type,
       image: imageUrl,
     });
+    
 
     return res.status(201).json({
       message: "subCategory added successfully",
@@ -372,7 +380,7 @@ export const AddsubCategory = async (req, res) => {
 export const deletesubCategory = async (req, res) => {
   try {
     const subcategoryId = req.params.id;
-    const subcategory = await Category.findByIdAndDelete(subcategoryId);
+    const subcategory = await SubCategory.findByIdAndDelete(subcategoryId);
 
     if (!subcategory) {
       return res.status(404).json({
@@ -393,10 +401,10 @@ export const deletesubCategory = async (req, res) => {
 };
 
 
-export const deletesuBrand = async (req, res) => {
+export const deleteSubBrand = async (req, res) => {
   try {
     const subBrandId = req.params.id;
-    const SubBrand = await Category.findByIdAndDelete(subBrandId);
+    const SubBrand = await SubBrands.findByIdAndDelete(subBrandId);
 
     if (!SubBrand) {
       return res.status(404).json({
@@ -427,7 +435,7 @@ export const EditSubBrand = async (req, res) => {
     if (!req.file) return res.status(400).json({ error: "No image uploaded" });
 
     // Find sub-brand in database
-    const subBrand = await SubBrandModel.findById(subBrandId); // Use your actual model here
+    const subBrand = await SubBrands.findById(subBrandId); // Use your actual model here
     if (!subBrand) {
       return res
         .status(404)
@@ -455,32 +463,148 @@ export const EditSubBrand = async (req, res) => {
 export const EditSubCategory = async (req, res) => {
   try {
     const subCategoryId = req.params.id;
+    
     const { name } = req.body;
+    
 
     if (!name) return res.status(400).json({ error: "Name is required" });
-    if (!req.file) return res.status(400).json({ error: "No image uploaded" });
 
-    // Find sub-brand in database
-    const subCategory = await SubBrandModel.findById(subCategoryId); // Use your actual model here
+    const subCategory = await SubCategory.findById(subCategoryId);
     if (!subCategory) {
       return res
         .status(404)
-        .json({ success: false, message: "Sub-brand not found" });
+        .json({ success: false, message: "Subcategory not found" });
     }
 
-    // Update values
     subCategory.name = name;
-    subCategory.image = req.file.path 
+
+    if (req.file) {
+      subCategory.image = req.file.path;
+    }
 
     await subCategory.save();
 
     res.status(200).json({
       success: true,
-      message: "Sub-brand updated successfully",
-      subBrand,
+      message: "Subcategory updated successfully",
+      subCategory,
     });
   } catch (error) {
-    console.error("Error updating SubBrand:", error);
+    console.error("Error updating Subcategory:", error);
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+
+
+
+export const Subbrandsblockandunblock = async (req, res) => {
+  try {
+    const Subbrandid = req.params.id;
+
+    const brand = await SubBrands.findById(Subbrandid);
+    if (!brand) {
+      return res.status(404).json({ error: "category not found" });
+    }
+
+    brand.isBlocked = !brand.isBlocked;
+
+    await brand.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Subbrand ${
+        brand.isBlocked ? "Blocked" : "Unblocked"
+      } successfully`,
+      brand,
+    });
+  } catch (error) {
+    console.log("Error in Subbrandsblockandunblock:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const Subcategoryblockandunblock = async (req, res) => {
+  try {
+    const Subcategoryid = req.params.id;
+    
+    
+
+    const category = await SubCategory.findById(Subcategoryid);
+    if (!category) {
+      return res.status(404).json({ error: "category not found" });
+    }
+
+    category.isBlocked = !category.isBlocked;
+
+    await category.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Subcatgory ${
+        category.isBlocked ? "Blocked" : "Unblocked"
+      } successfully`,
+      category,
+    });
+  } catch (error) {
+    console.error("Error in Subcategoryblockandunblock:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const viewSubBrands = async (req,res)=>{
+  try {
+    const brandId = req.params.id
+
+    const subbrands = await SubBrands.find({brandId})
+
+    res.status(200).json({
+      subbrands,
+    });
+  } catch (error) {
+    console.log('error in viewsubbrand',error);
+    res.status(500).json({ error });
+  }
+};
+
+
+export const viewSubCategory = async (req, res) => {
+  try {
+    const categoryId = new mongoose.Types.ObjectId(req.params.id);
+    const { page = 1, limit = 10, search = '', status = 'all' } = req.query;
+
+    const skip = (page - 1) * Number(limit);
+
+    const query = { CategoryId: categoryId };
+
+    if (search) {
+      query.name = { $regex: search, $options: 'i' };
+    }
+
+    if (status === 'blocked') {
+      query.isBlocked = true;
+    } else if (status === 'unblocked') {
+      query.isBlocked = false;
+    }
+
+    const totalCount = await SubCategory.countDocuments(query);
+    
+    const subcategories = await SubCategory.find(query)
+      .skip(skip)
+      .limit(Number(limit))
+      .sort({ createdAt: -1 });
+
+
+    return res.status(200).json({
+      success: true,
+      subcategory: subcategories,
+      totalPages: Math.ceil(totalCount / limit),
+      totalCount,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+
+

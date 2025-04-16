@@ -12,7 +12,6 @@ const adminSlice = createSlice({
   initialState,
   reducers: {
     loginAdmin: (state, action) => {
-      console.log("LoginAdmin action payload:", action.payload); // Debugging line
       state.admin = action.payload.admin;
       state.token = action.payload.token;
       state.role = action.payload.role;

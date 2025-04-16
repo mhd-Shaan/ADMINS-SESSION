@@ -25,6 +25,8 @@ import EditPassword from "./pages/EditPassword";
 import StoreDetails from "./pages/StoreDetails";
 import Category from "./pages/Category";
 import Brands from "./pages/Brands";
+import SubCategory from "./pages/SubCategory";
+import SubBrands from "./pages/SubBrands";
 
 function App() {
   const [admins, setAdmin] = useState(null); // Initialize as null
@@ -52,11 +54,10 @@ function App() {
         dispatch(
           loginAdmin({ admin: response.data.admin, token: response.data.token })
         );
-        console.log("Admin Role:", response.data.admin.role);
       } catch (error) {
         console.error("Error fetching admin data:", error);
         if (error.response) {
-          console.log("Server Response:", error.response.data); // Log response for more details
+          ("Server Response:", error.response.data); // Log response for more details
         }
       }
     };
@@ -89,6 +90,9 @@ function App() {
           <Route path="manage-reviews" element={<Reviews />} />
           <Route path="manage-category" element={<Category />} />
           <Route path="manage-brands" element={<Brands />} />
+          <Route path="subcategories/:id" element={<SubCategory />} />
+          <Route path="subbrands" element={<SubBrands/>}></Route>
+
           <Route
             path="manage-admins"
             element={

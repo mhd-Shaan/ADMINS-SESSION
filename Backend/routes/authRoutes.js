@@ -2,9 +2,9 @@ import express from 'express';
 import { registeradmins, loginadmins, getadmins, blockandunblockadmin, Editadmin, getadminDetails, updatePassword, Otpsend, CheckingOtp } from '../controllers/authController.js';
 import authHelper from '../helpers/auth.js'
 import { GetStores, GetStorespending, storeApproval, storeRejecting, storesblockandunblock } from '../controllers/StoreController.js';
-import { AddBrand, AddCatgorey, brandsblockandunblock, categoryblockandunblock, deleteBrand, deleteCategory, GetUsers, userblockandunblock, viewBrands, viewCategory } from '../controllers/userController.js';
+import { AddBrand, AddCatgorey, AddsubBrand, AddsubCategory, brandsblockandunblock, categoryblockandunblock, deleteBrand, deleteCategory, deleteSubBrand, deletesubCategory, EditSubBrand, EditSubCategory, GetUsers, Subbrandsblockandunblock, Subcategoryblockandunblock, userblockandunblock, viewBrands, viewCategory, viewSubBrands, viewSubCategory } from '../controllers/userController.js';
 import OtpVerification from '../models/otpScehma.js';
-import { upload, uploding } from '../config/multer.js';
+import { SubBrand, Subcatgory, upload, uploding } from '../config/multer.js';
 
 
 const {authenticate}=authHelper
@@ -38,6 +38,19 @@ router.put('/category-status/:id',authenticate,categoryblockandunblock)
 router.put('/brand-status/:id',authenticate,brandsblockandunblock)
 router.delete('/delete-category/:id',authenticate,deleteCategory)
 router.delete('/delete-brand/:id',authenticate,deleteBrand)
+router.post('/add-subbrand',authenticate,SubBrand.single("image"),AddsubBrand)
+router.post('/add-subcategory',authenticate,Subcatgory.single("image"),AddsubCategory)
+router.get('/view-subbrands',authenticate,viewSubBrands)
+router.get('/view-subcategory/:id',authenticate,viewSubCategory)
+router.put('/edit-subbrand/:id',authenticate,EditSubBrand)
+router.put('/edit-subcategory/:id',authenticate,Subcatgory.single('image'),EditSubCategory)
+router.put('/subbrand-status/:id',authenticate,Subbrandsblockandunblock)
+router.patch('/subcategory-status/:id',authenticate,Subcategoryblockandunblock)
+router.delete('/delete-subcategory/:id',authenticate,deletesubCategory)
+router.delete('/delete-subbrand/:id',authenticate,deleteSubBrand)
+
+
+
 
 
 
