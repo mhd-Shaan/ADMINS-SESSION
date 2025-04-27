@@ -3,25 +3,38 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { FaPlus, FaEllipsisV, FaCheck, FaTimes, FaTrash } from 'react-icons/fa';
 import { Dialog, Transition } from '@headlessui/react';
+import { TextField, InputAdornment, IconButton, MenuItem, Pagination } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
 
 const ManageLocation = () => {
   const [cities, setCities] = useState([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newCity, setNewCity] = useState({ city: '', isActive: true });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const menuRefs = useRef({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
   const token = localStorage.getItem('token');
 
   const fetchCities = async () => {
     try {
-      setLoading(true);
       setError(null);
       const { data } = await axios.get('http://localhost:5000/viewlocations', {
         headers: { Authorization: `Bearer ${token}` },
+        params: {
+          page: currentPage,
+          limit: itemsPerPage,
+          search: searchQuery,
+          status: filterStatus,
+        },
       });
-      setCities(data.citys || []);
+      setCities(data.cities || []);
+      setTotalPages(data.totalPages ); // Update total pages based on the response
     } catch (error) {
       setError('Failed to load cities');
       toast.error(error.response?.data?.error || 'Could not fetch cities');
@@ -33,7 +46,16 @@ const ManageLocation = () => {
 
   useEffect(() => {
     fetchCities();
-  }, []);
+  }, [currentPage, searchQuery, filterStatus]);
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleFilterChange = (e) => {
+    setFilterStatus(e.target.value);
+  };
 
   const handleAddCity = async () => {
     if (!newCity.city.trim()) {
@@ -56,16 +78,12 @@ const ManageLocation = () => {
 
   const toggleCityStatus = async (cityId) => {
     try {
-      await axios.put(
-        `http://localhost:5000/location-status/${cityId}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success('City status updated');
+      await axios.put(`http://localhost:5000/location-status/${cityId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success(`City status updated`);
       fetchCities();
     } catch (error) {
-      console.log(error);
-      
       toast.error(error.response?.data?.error || 'Failed to update status');
     } finally {
       setOpenMenuId(null);
@@ -82,7 +100,6 @@ const ManageLocation = () => {
       toast.success('City deleted successfully');
       fetchCities();
     } catch (error) {
-      
       toast.error(error.response?.data?.error || 'Failed to delete city');
     } finally {
       setOpenMenuId(null);
@@ -106,6 +123,10 @@ const ManageLocation = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [openMenuId]);
+
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
+  };
 
   if (loading) {
     return (
@@ -135,15 +156,48 @@ const ManageLocation = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header and Add Button */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Cities Management</h1>
-        <button
-          onClick={() => setIsAddDialogOpen(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
-        >
-          <FaPlus className="text-sm" /> Add City
-        </button>
+      {/* Header and Search + Dropdown + Add Button */}
+      <div className="flex flex-col md:flex-row gap-4 items-center mb-6 w-full">
+        <div className="w-full md:w-[50%]">
+          <TextField
+            label="Search Cities"
+            variant="outlined"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton>
+                    <SearchIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            fullWidth
+          />
+        </div>
+        <div className="w-full md:w-[30%]">
+          <TextField
+            select
+            label="Filter"
+            value={filterStatus}
+            onChange={handleFilterChange}
+            variant="outlined"
+            fullWidth
+          >
+            <MenuItem value="all">Show All</MenuItem>
+            <MenuItem value="blocked">Blocked</MenuItem>
+            <MenuItem value="unblocked">Unblocked</MenuItem>
+          </TextField>
+        </div>
+        <div className="w-full md:w-[20%]">
+          <button
+            onClick={() => setIsAddDialogOpen(true)}
+            className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 w-full"
+          >
+            <FaPlus className="text-sm" /> Add City
+          </button>
+        </div>
       </div>
 
       {/* Cities Table */}
@@ -185,32 +239,16 @@ const ManageLocation = () => {
                         <div className="origin-top-right absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
                           <div className="py-1">
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleCityStatus(city._id);
-                              }}
-                              className={`flex items-center w-full px-4 py-2 text-sm ${
-                                city.isActive ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'
-                              }`}
+                              onClick={(e) => { toggleCityStatus(city._id); e.stopPropagation(); }}
+                              className="text-gray-700 block px-4 py-2 text-sm"
                             >
-                              {city.isActive ? (
-                                <>
-                                  <FaTimes className="mr-2" /> Block
-                                </>
-                              ) : (
-                                <>
-                                  <FaCheck className="mr-2" /> Unblock
-                                </>
-                              )}
+                              {city.isActive ? 'Block' : 'Unblock'}
                             </button>
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteCity(city._id);
-                              }}
-                              className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                              onClick={(e) => { handleDeleteCity(city._id); e.stopPropagation(); }}
+                              className="text-red-600 block px-4 py-2 text-sm"
                             >
-                              <FaTrash className="mr-2" /> Delete
+                              <FaTrash className="inline-block mr-2" /> Delete
                             </button>
                           </div>
                         </div>
@@ -224,89 +262,43 @@ const ManageLocation = () => {
         </table>
       </div>
 
-      {/* Add City Dialog */}
-      <Transition appear show={isAddDialogOpen} as={Fragment}>
-        <Dialog
-          as="div"
-          className="fixed inset-0 z-10 overflow-y-auto"
-          onClose={() => setIsAddDialogOpen(false)}
-        >
-          {/* Remove the black background overlay */}
-          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0"
-              enterTo="opacity-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100"
-              leaveTo="opacity-0"
-            >
-              {/* Empty div - we removed the overlay */}
-              <div className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">
-                &#8203;
-              </div>
-            </Transition.Child>
+      {/* Pagination */}
+      <div className="mt-4 flex justify-center">
+        <Pagination
+          count={totalPages}
+          page={currentPage}
+          onChange={handlePageChange}
+          color="primary"
+        />
+      </div>
 
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-              enterTo="opacity-100 translate-y-0 sm:scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-            >
-              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
-                    Add New City
-                  </Dialog.Title>
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700">City Name</label>
-                    <input
-                      type="text"
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      value={newCity.name}
-                      onChange={(e) => setNewCity({...newCity, city: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div className="mt-4 flex items-center">
-                    <input
-                      type="checkbox"
-                      id="isActive"
-                      name="isActive"
-                      checked={newCity.isActive}
-                      onChange={(e) => setNewCity({...newCity, isActive: e.target.checked})}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
-                      Active City
-                    </label>
-                  </div>
-                </div>
-                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button
-                    type="button"
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
-                    onClick={handleAddCity}
-                  >
-                    Add
-                  </button>
-                  <button
-                    type="button"
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                    onClick={() => setIsAddDialogOpen(false)}
-                  >
-                    Cancel
-                  </button>
-                </div>
+      {/* Add City Dialog */}
+      <Transition show={isAddDialogOpen} as={Fragment}>
+        <Dialog as="div" open={isAddDialogOpen} onClose={() => setIsAddDialogOpen(false)}>
+          <Dialog.Overlay className="fixed inset-0 bg-black opacity-30" />
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <Dialog.Panel className="bg-white rounded-lg shadow-lg p-6 w-full sm:w-96">
+              <Dialog.Title className="text-xl font-semibold mb-4">Add City</Dialog.Title>
+              <TextField
+                label="City Name"
+                variant="outlined"
+                value={newCity.city}
+                onChange={(e) => setNewCity({ ...newCity, city: e.target.value })}
+                fullWidth
+                required
+              />
+              <div className="flex justify-end mt-4">
+                <button
+                  onClick={handleAddCity}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+                >
+                  Add City
+                </button>
               </div>
-            </Transition.Child>
+            </Dialog.Panel>
           </div>
         </Dialog>
-      </Transition> 
+      </Transition>
     </div>
   );
 };

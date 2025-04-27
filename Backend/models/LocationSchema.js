@@ -12,8 +12,7 @@ const locationSchema = new mongoose.Schema(
       required: true,
     },
     isActive: {
-      type: String,
-      enum: ["true", "false"],
+      type: Boolean,
       default: "true",
     },
   },

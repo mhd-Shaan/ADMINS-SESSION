@@ -639,16 +639,42 @@ export const managelocation = async(req,res)=>{
   }
 }
 
-export const viewlocation = async(req,res)=>{
+export const viewlocation = async (req, res) => {
   try {
-    const citys = await Location.find()
-    return res.status(200).json({citys})
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ error});
-  }
+    const { page = 1, limit = 10, search = '', status = 'all' } = req.query;
+    const skip = (page - 1) * Number(limit);
 
-}
+    const query = {};
+
+    if (search) {
+      query.city = { $regex: search, $options: 'i' };  
+    }
+
+    if (status === 'blocked') {
+      query.isActive = false;
+    } else if (status === 'unblocked') {
+      query.isActive = true;
+    }
+
+    const totalCount = await Location.countDocuments(query);
+
+    const cities = await Location.find(query)
+      .skip(skip)
+      .limit(Number(limit))
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      cities,
+      totalPages: Math.ceil(totalCount / limit),
+      totalCount
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'An error occurred while fetching cities.' });
+  }
+};
+
 
 export const locationblockandunblock = async (req, res) => {
   try {
@@ -659,9 +685,9 @@ export const locationblockandunblock = async (req, res) => {
       return res.status(404).json({ error: "Location not found" });
     }
 
+    
     city.isActive = !city.isActive;
 
-    await city.save();
 
     res.status(200).json({
       success: true,
@@ -670,6 +696,8 @@ export const locationblockandunblock = async (req, res) => {
       } successfully`,
       city,
     });
+    await city.save();
+
   } catch (error) {
     console.error("Error in blocking/unblocking location:", error);
     res.status(500).json({ error: "Internal Server Error" });
