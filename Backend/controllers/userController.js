@@ -6,6 +6,8 @@ import { type } from "os";
 import SubBrands from "../models/SubBrandSchema.js";
 import SubCategory from "../models/SubCatgoerySchema.js";
 import mongoose from 'mongoose';
+import LocationSchema from "../models/LocationSchema.js";
+import Location from "../models/LocationSchema.js";
 
 
 export const userblockandunblock = async (req, res) => {
@@ -601,10 +603,100 @@ export const viewSubCategory = async (req, res) => {
       totalCount,
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
 
 
 
+export const managelocation = async(req,res)=>{
+  try {
+    const { city,isActive } = req.body;
+    
+  
+    if (!city) return res.status(400).json({ error: "city is required" });
+    if (!isActive) return res.status(400).json({ error: "status is required" });
+
+    const existlocation = await Location.findOne({city})
+
+    if(existlocation) return res.status(400).json({error:"this is already existing"})
+    const location = await Location.create({
+     city,
+    isActive
+    });
+    
+
+    return res.status(201).json({
+      message: "city added successfully",
+      location,
+    });
+
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error});
+  }
+}
+
+export const viewlocation = async(req,res)=>{
+  try {
+    const citys = await Location.find()
+    return res.status(200).json({citys})
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error});
+  }
+
+}
+
+export const locationblockandunblock = async (req, res) => {
+  try {
+    const locationid = req.params.id;
+
+    const city = await Location.findById(locationid);
+    if (!city) {
+      return res.status(404).json({ error: "Location not found" });
+    }
+
+    city.isActive = !city.isActive;
+
+    await city.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Location ${
+        city.isActive ? "Unblocked" : "Blocked"
+      } successfully`,
+      city,
+    });
+  } catch (error) {
+    console.error("Error in blocking/unblocking location:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+
+
+export const deletelocations = async (req, res) => {
+  try {
+    const locationId = req.params.id;
+    const citys = await Location.findByIdAndDelete(locationId);
+
+    if (!citys) {
+      return res.status(404).json({
+        success: false,
+        message: "Category not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "city deleted successfully",
+      citys,
+    });
+  } catch (error) {
+    console.log("Error in deletecitys:", error);
+    res.status(500).json({ error });
+  }
+};

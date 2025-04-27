@@ -11,6 +11,7 @@ import {
   Menu,
   UserCog,
   Boxes,
+  MapPin
 } from "lucide-react";
 import { useSelector } from "react-redux";
 import React from "react";
@@ -29,6 +30,7 @@ const Sidebar = () => {
     { name: "Dashboard", icon: LayoutDashboard, path: "/home" },
     { name: "Manage Users", icon: Users, path: "/home/manage-users" },
     { name: "Manage Store", icon: Store, path: "/home/manage-store" },
+    { name: "Manage location", icon: MapPin, path: "/home/manage-location" },
     { name: "Category", icon: Boxes, path: "/home/manage-category" },
     { name: "Brands", icon: Tag, path: "/home/manage-brands" },
     { name: "Reviews", icon: Star, path: "/home/manage-reviews" },

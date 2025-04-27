@@ -2,7 +2,7 @@ import express from 'express';
 import { registeradmins, loginadmins, getadmins, blockandunblockadmin, Editadmin, getadminDetails, updatePassword, Otpsend, CheckingOtp } from '../controllers/authController.js';
 import authHelper from '../helpers/auth.js'
 import { GetStores, GetStorespending, storeApproval, storeRejecting, storesblockandunblock } from '../controllers/StoreController.js';
-import { AddBrand, AddCatgorey, AddsubBrand, AddsubCategory, brandsblockandunblock, categoryblockandunblock, deleteBrand, deleteCategory, deleteSubBrand, deletesubCategory, EditSubBrand, EditSubCategory, GetUsers, Subbrandsblockandunblock, Subcategoryblockandunblock, userblockandunblock, viewBrands, viewCategory, viewSubBrands, viewSubCategory } from '../controllers/userController.js';
+import { AddBrand, AddCatgorey, AddsubBrand, AddsubCategory, brandsblockandunblock, categoryblockandunblock, deleteBrand, deleteCategory, deletelocations, deleteSubBrand, deletesubCategory, EditSubBrand, EditSubCategory, GetUsers, locationblockandunblock, managelocation, Subbrandsblockandunblock, Subcategoryblockandunblock, userblockandunblock, viewBrands, viewCategory, viewlocation, viewSubBrands, viewSubCategory } from '../controllers/userController.js';
 import OtpVerification from '../models/otpScehma.js';
 import { SubBrand, Subcatgory, upload, uploding } from '../config/multer.js';
 
@@ -50,7 +50,10 @@ router.delete('/delete-subcategory/:id',authenticate,deletesubCategory)
 router.delete('/delete-subbrand/:id',authenticate,deleteSubBrand)
 
 
-
+router.post('/addlocations',authenticate,managelocation)
+router.get('/viewlocations',authenticate,viewlocation)
+router.put('/location-status/:id',authenticate,locationblockandunblock)
+router.delete('/delete-location/:id',authenticate,deletelocations)
 
 
 
