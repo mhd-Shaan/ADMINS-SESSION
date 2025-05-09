@@ -6,6 +6,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { TextField, InputAdornment, IconButton, MenuItem, Pagination } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
+
 const ManageLocation = () => {
   const [cities, setCities] = useState([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -274,31 +275,52 @@ const ManageLocation = () => {
 
       {/* Add City Dialog */}
       <Transition show={isAddDialogOpen} as={Fragment}>
-        <Dialog as="div" open={isAddDialogOpen} onClose={() => setIsAddDialogOpen(false)}>
-          <Dialog.Overlay className="fixed inset-0 bg-black opacity-30" />
-          <div className="fixed inset-0 flex items-center justify-center p-4">
-            <Dialog.Panel className="bg-white rounded-lg shadow-lg p-6 w-full sm:w-96">
-              <Dialog.Title className="text-xl font-semibold mb-4">Add City</Dialog.Title>
-              <TextField
-                label="City Name"
-                variant="outlined"
-                value={newCity.city}
-                onChange={(e) => setNewCity({ ...newCity, city: e.target.value })}
-                fullWidth
-                required
-              />
-              <div className="flex justify-end mt-4">
-                <button
-                  onClick={handleAddCity}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg"
-                >
-                  Add City
-                </button>
-              </div>
-            </Dialog.Panel>
+  <Dialog as="div" className="relative z-10" onClose={() => setIsAddDialogOpen(false)}>
+    <Transition.Child
+      as={Fragment}
+      enter="ease-out duration-300"
+      enterFrom="opacity-0"
+      enterTo="opacity-100"
+      leave="ease-in duration-200"
+      leaveFrom="opacity-100"
+      leaveTo="opacity-0"
+    >
+      <div className="fixed inset-0  bg-opacity-30" />
+    </Transition.Child>
+
+    <div className="fixed inset-0 flex items-center justify-center p-4">
+      <Transition.Child
+        as={Fragment}
+        enter="ease-out duration-300"
+        enterFrom="opacity-0 scale-95"
+        enterTo="opacity-100 scale-100"
+        leave="ease-in duration-200"
+        leaveFrom="opacity-100 scale-100"
+        leaveTo="opacity-0 scale-95"
+      >
+        <Dialog.Panel className="bg-white rounded-lg shadow-lg p-6 w-full sm:w-96">
+          <Dialog.Title className="text-xl font-semibold mb-4">Add City</Dialog.Title>
+          <TextField
+            label="City Name"
+            variant="outlined"
+            value={newCity.city}
+            onChange={(e) => setNewCity({ ...newCity, city: e.target.value })}
+            fullWidth
+            required
+          />
+          <div className="flex justify-end mt-4">
+            <button
+              onClick={handleAddCity}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+            >
+              Add City
+            </button>
           </div>
-        </Dialog>
-      </Transition>
+        </Dialog.Panel>
+      </Transition.Child>
+    </div>
+  </Dialog>
+</Transition>
     </div>
   );
 };

@@ -326,7 +326,6 @@ function SubCategory() {
                 fullWidth
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                required
                 className="mb-4"
               />
               <input

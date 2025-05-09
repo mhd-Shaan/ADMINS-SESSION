@@ -189,7 +189,6 @@ function CategoryComponent() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  required
                   className="w-full px-3 py-2 border rounded"
                 />
               </div>
@@ -200,7 +199,6 @@ function CategoryComponent() {
                   type="file"
                   accept="image/*"
                   onChange={(e) => setImage(e.target.files[0])}
-                  required
                   className="w-full"
                 />
               </div>

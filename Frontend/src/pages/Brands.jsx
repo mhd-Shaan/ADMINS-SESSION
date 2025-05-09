@@ -236,7 +236,6 @@ function BrandComponent() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  required
                   className="w-full px-3 py-2 border rounded"
                 />
               </div>
@@ -247,7 +246,6 @@ function BrandComponent() {
                   value={type}
                   onChange={(e) => setType(e.target.value)}
                   className="w-full px-3 py-2 border rounded"
-                  required
                 >
                   <option value="OEM">OEM</option>
                   <option value="OES">OES</option>
@@ -260,7 +258,6 @@ function BrandComponent() {
                   type="file"
                   accept="image/*"
                   onChange={(e) => setImage(e.target.files[0])}
-                  required
                   className="w-full"
                 />
               </div>
