@@ -8,6 +8,7 @@ import SubCategory from "../models/SubCatgoerySchema.js";
 import mongoose from 'mongoose';
 import LocationSchema from "../models/LocationSchema.js";
 import Location from "../models/LocationSchema.js";
+import DeliveryRegistration from "../models/deliveryBoySchema.js.js";
 
 
 export const userblockandunblock = async (req, res) => {
@@ -726,5 +727,76 @@ export const deletelocations = async (req, res) => {
   } catch (error) {
     console.log("Error in deletecitys:", error);
     res.status(500).json({ error });
+  }
+};
+
+export const viewboys = async (req, res) => {
+  try {
+    let { page = 1, limit = 10, search = '', status = 'all' } = req.query;
+    
+    
+
+    const pageNum = Math.max(Number(page), 1);
+    const limitNum = Math.max(Number(limit), 1);
+    const skip = (pageNum - 1) * limitNum;
+
+    const query = {};
+
+    if (search) {
+      query.fullName = { $regex: search, $options: 'i' };
+    }
+
+    if (status === 'blocked') {
+      query.isBlocked = true;
+    } else if (status === 'unblocked') {
+      query.isBlocked = false;
+    }
+    
+
+    const totalCount = await DeliveryRegistration.countDocuments(query);
+
+    const deliveryBoys = await DeliveryRegistration.find(query)
+      .skip(skip)
+      .limit(limitNum)
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      deliveryBoys,
+      totalPages: Math.ceil(totalCount / limitNum),
+      totalCount,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+export const boysblockandunblock = async (req, res) => {
+  try {
+    
+    const boysid = req.params.id;
+
+    // Find the admin in the database
+    const boys = await DeliveryRegistration.findById(boysid);
+    
+    if (!boys) {
+      return res.status(404).json({ error: "boys not found" });
+    }
+
+    boys.isBlocked = !boys.isBlocked;
+
+    await boys.save();
+
+    res.status(200).json({
+      success: true,
+      message: `boys ${
+        boys.isBlocked ? "Blocked" : "Unblocked"
+      } successfully`,
+      boys,
+    });
+  } catch (error) {
+    console.error("Error in blockandunblockboys:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
