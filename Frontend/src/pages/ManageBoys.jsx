@@ -71,7 +71,7 @@ const res = await fetch(`http://localhost:5000/viewboys?${params}`, {
   headers: { Authorization: `Bearer ${token}` },
 });
 
-      // console.log(res);
+      console.log(res);
       
       const data = await res.json();
       
@@ -257,7 +257,7 @@ const updateBlockStatus = async (boyId, isBlocked) => {
                 <TableRow>
                   <TableCell><strong>Name</strong></TableCell>
                   <TableCell><strong>Contact Info</strong></TableCell>
-                  <TableCell><strong>Vehicle Details</strong></TableCell>
+                  <TableCell><strong>Liscence Details</strong></TableCell>
                   <TableCell><strong>Status</strong></TableCell>
                   <TableCell><strong>Actions</strong></TableCell>
                 </TableRow>
@@ -281,7 +281,7 @@ const updateBlockStatus = async (boyId, isBlocked) => {
                     </TableCell>
                     <TableCell>
                       <Typography>{boy.vehicleType}</Typography>
-                      <Typography color="textSecondary">{boy.vehicleNumber}</Typography>
+                      <Typography color="textSecondary">{boy.licenseNumber}</Typography>
                     </TableCell>
                     <TableCell>
                       <Chip
