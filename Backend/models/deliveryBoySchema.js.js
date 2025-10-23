@@ -7,46 +7,46 @@ const deliveryBoySchema = new mongoose.Schema({
   password: { type: String }, // Login password
   emailVerified: { type: Boolean, default: false },
 
-  dob: { type: Date }, // 🎂 Date of Birth
-  gender: {
-    type: String,
-    enum: ["male", "female"],
-  },
+  dob: { type: Date },
+  gender: { type: String, enum: ["male", "female"] },
 
   licenseNumber: { type: String },
-licenseImage: {
-  type: [String]
-},
+  licenseImage: { type: [String] },
+
   district: { type: String },
   pincode: { type: String },
-  photo: { type: String }, // Profile photo (Cloudinary URL)
+  photo: { type: String }, // Cloudinary URL
   address: { type: String },
-  vehicleType: {
-    type: String,
-    enum: ["bike", "scooter", "car", "van", "bicycle", "other"], // you can adjust options
-  },
-  vehicleNumber: {
-    type: String,
-    
-  },
+
   status: {
     type: String,
     enum: ["pending", "approved", "rejected", "blocked"],
     default: "pending",
   },
-   isBlocked: {
-    type: Boolean,
-    default: false, // Store is not blocked by default
+
+  isBlocked: { type: Boolean, default: false },
+  isOnline: { type: Boolean, default: false },
+
+  // ✅ GeoJSON location for finding nearest delivery boy
+  location: {
+    type: {
+      type: String,
+      enum: ["Point"],
+      default: "Point",
+    },
+    coordinates: {
+      type: [Number], // [longitude, latitude]
+      default: [0, 0],
+    },
   },
 
-  isOnline: { type: Boolean, default: false },
-  currentLocation: {
-    lat: { type: Number },
-    lng: { type: Number },
-  },
+  // ✅ If currently delivering
+  currentOrder: { type: mongoose.Schema.Types.ObjectId, ref: "Order" },
 
   createdAt: { type: Date, default: Date.now },
 });
+
+deliveryBoySchema.index({ location: "2dsphere" });
 
 const DeliveryRegistration = mongoose.model(
   "DeliveryBoyRegistration",

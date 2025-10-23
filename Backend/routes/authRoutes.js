@@ -5,6 +5,7 @@ import { GetStores, GetStorespending, storeApproval, storeRejecting, storesblock
 import { AddBrand, AddCatgorey, AddsubBrand, AddsubCategory, boysblockandunblock, brandsblockandunblock, categoryblockandunblock, deleteBrand, deleteCategory, deletelocations, deleteSubBrand, deletesubCategory, EditSubBrand, EditSubCategory, GetUsers, locationblockandunblock, managelocation, Subbrandsblockandunblock, Subcategoryblockandunblock, userblockandunblock, viewboys, viewBrands, viewCategory, viewlocation, viewSubBrands, viewSubCategory } from '../controllers/userController.js';
 import OtpVerification from '../models/otpScehma.js';
 import { SubBrand, Subcatgory, upload, uploding } from '../config/multer.js';
+import { assignDeliveryPartner, getAllOrders, updateOrderStatus } from '../controllers/orderController.js';
 
 
 const {authenticate}=authHelper
@@ -61,6 +62,8 @@ router.delete('/delete-location/:id',authenticate,deletelocations)
 router.get('/viewboys',authenticate,viewboys)
 router.put('/boys-block-unblock/:id',authenticate,boysblockandunblock)
 
-
+router.get("/orders", authenticate,getAllOrders);
+router.patch("/:orderId/assign",authenticate, assignDeliveryPartner);
+router.patch("/:orderId/status",authenticate, updateOrderStatus);
 
 export default router;

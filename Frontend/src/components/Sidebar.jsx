@@ -12,9 +12,11 @@ import {
   UserCog,
   Boxes,
   MapPin,
-  Package
+  Package,
+  ClipboardList
 } from "lucide-react";
 import { useSelector } from "react-redux";
+
 import React from "react";
 
 const Sidebar = () => {
@@ -35,6 +37,7 @@ const Sidebar = () => {
     { name: "Category", icon: Boxes, path: "/home/manage-category" },
     { name: "Brands", icon: Tag, path: "/home/manage-brands" },
     { name: "Manage Delivery Boy", icon: Package, path: "/home/manage-delivery-boy" }, 
+   { name: "Manage Orders", icon: ClipboardList, path: "/home/manage-orders" }, 
     { name: "Reviews", icon: Star, path: "/home/manage-reviews" },
     { name: "Advertisement", icon: Megaphone, path: "/home/manage-advertisement" },
     ...(admin.role === "superadmin"

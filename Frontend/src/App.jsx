@@ -29,6 +29,7 @@ import SubCategory from "./pages/SubCategory";
 import SubBrands from "./pages/SubBrands";
 import Managelocation from "./pages/Managelocation";
 import ManageBoys from "./pages/ManageBoys";
+import ManageOrders from "./pages/ManageOrders";
 
 function App() {
   const [admins, setAdmin] = useState(null); // Initialize as null
@@ -114,6 +115,7 @@ function App() {
           <Route path="Storedetails" element={<StoreDetails/>}></Route>
           <Route path="manage-location" element={<Managelocation/>}></Route>
           <Route path="manage-delivery-boy" element={<ManageBoys/>}></Route>
+          <Route path="manage-orders" element={<ManageOrders/>}></Route>
         </Route>
       </Routes>
     </Router>
