@@ -8,7 +8,7 @@ import SubCategory from "../models/SubCatgoerySchema.js";
 import mongoose from 'mongoose';
 import LocationSchema from "../models/LocationSchema.js";
 import Location from "../models/LocationSchema.js";
-import DeliveryRegistration from "../models/deliveryBoySchema.js.js";
+import DeliveryRegistration from "../models/deliveryBoySchema.js";
 
 
 export const userblockandunblock = async (req, res) => {

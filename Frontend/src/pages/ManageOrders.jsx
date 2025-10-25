@@ -14,6 +14,9 @@ import {
   InputLabel
 } from "@mui/material";
 import axios from "axios";
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:5000"); // Connect to Socket.io server
 
 function ManageOrders() {
   const [orders, setOrders] = useState([]);
@@ -24,20 +27,32 @@ function ManageOrders() {
 
   useEffect(() => {
     fetchOrders();
+
+    // Socket.io listeners for live updates
+    socket.on("orderAssigned", (data) => {
+      console.log("Order assigned:", data);
+      fetchOrders();
+    });
+
+    socket.on("orderStatusUpdated", (data) => {
+      console.log("Order status updated:", data);
+      fetchOrders();
+    });
+
+    return () => {
+      socket.off("orderAssigned");
+      socket.off("orderStatusUpdated");
+    };
   }, []);
 
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem("token");
       const { data } = await axios.get("http://localhost:5000/orders", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
 
-      // ensure all orders have a user object
       const safeOrders = data.orders.map(order => ({
         ...order,
         user: order.user || {},
@@ -45,9 +60,6 @@ function ManageOrders() {
       }));
 
       setOrders(safeOrders);
-      console.log(safeOrders);
-      
-      
       setLoading(false);
     } catch (err) {
       console.log("Failed to fetch orders:", err);
@@ -55,22 +67,22 @@ function ManageOrders() {
     }
   };
 
-  const handleAssign = async (orderId) => {
+  // Auto-assign using backend API
+  const handleAutoAssign = async (orderId, storeId) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.patch(
-        `http://localhost:5000/${orderId}/assign`,
-        { partnerId: "670b456ef9d0f1b123456789" },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
-        }
+      const { data } = await axios.post(
+        "http://localhost:5000/api/delivery/auto-assign",
+        { orderId, storeId },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert("Delivery partner assigned!");
-      fetchOrders();
+
+      if (data.success) {
+        alert(`Order auto-assigned to ${data.assignedTo}`);
+        fetchOrders();
+      } else {
+        alert(data.message || "No partner available nearby");
+      }
     } catch (err) {
       console.log(err);
     }
@@ -88,17 +100,11 @@ function ManageOrders() {
       await axios.patch(
         `http://localhost:5000/orders/${selectedOrder._id}/status`,
         { status: newStatus },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert("Order status updated!");
       setOpen(false);
       fetchOrders();
+      socket.emit("orderStatusUpdated", { orderId: selectedOrder._id, newStatus });
     } catch (err) {
       console.log(err);
     }
@@ -110,26 +116,20 @@ function ManageOrders() {
       field: "user",
       headerName: "Customer",
       flex: 1,
-      valueGetter: (params) => {
-    return params?.name || "N/A"; // return the name or fallback
-}
-
+      valueGetter: (params) => params?.user?.fullName || "N/A"
     },
-
     {
       field: "shippingAddress",
       headerName: "Address",
       flex: 2,
-      valueGetter: (params) =>{
-        return `${params.address},${params.city}` || 'N/A'
-      }
-     
+      valueGetter: (params) =>
+        `${params.shippingAddress?.address || ""}, ${params.shippingAddress?.city || ""}` || "N/A"
     },
     {
       field: "orderItems",
       headerName: "Items",
       flex: 0.5,
-      valueGetter: (params) => params.length || 0,
+      valueGetter: (params) => params.orderItems?.length || 0
     },
     { field: "totalPrice", headerName: "Amount", flex: 0.7 },
     { field: "paymentStatus", headerName: "Payment", flex: 0.7 },
@@ -138,7 +138,7 @@ function ManageOrders() {
       field: "assignedPartner",
       headerName: "Delivery Partner",
       flex: 1,
-      valueGetter: (params) => params?.name || "Not Assigned",
+      valueGetter: (params) => params.assignedPartner?.fullName || "Not Assigned"
     },
     {
       field: "actions",
@@ -149,20 +149,20 @@ function ManageOrders() {
           <Button
             variant="contained"
             size="small"
-            onClick={() => handleAssign(params.row._id)}
+            onClick={() => handleAutoAssign(params.row._id, params.row.storeId)}
           >
-            Assign
+            Auto Assign
           </Button>
           <Button
             variant="outlined"
             size="small"
             onClick={() => handleOpenUpdate(params.row)}
           >
-            Update
+            Update Status
           </Button>
         </div>
-      ),
-    },
+      )
+    }
   ];
 
   return (

@@ -17,7 +17,10 @@ const deliveryBoySchema = new mongoose.Schema({
   pincode: { type: String },
   photo: { type: String }, // Cloudinary URL
   address: { type: String },
+maxActiveOrders: { type: Number, default: 2 },
 
+// Track his current delivery load
+activeOrdersCount: { type: Number, default: 0 },
   status: {
     type: String,
     enum: ["pending", "approved", "rejected", "blocked"],
